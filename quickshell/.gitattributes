@@ -1,0 +1,12 @@
+# Vendored tree — bytes exactly as they came from upstream.
+#
+# This machine's gitconfig sets core.autocrlf=input, which normalises CRLF to
+# LF on the way into the index. For our own code that is what we want; here it
+# is not. 105 of the end-4 SVGs ship with CRLF, and normalising them makes the
+# tree stop being byte-identical to the commit recorded in UPSTREAM. The
+# refetch described there works by diffing against a clean copy — with
+# normalisation that diff shows 105 files nobody touched, and the signal that
+# matters (what WE changed, ADR-0009) is buried in the noise.
+#
+# -text disables end-of-line conversion for this subtree.
+* -text

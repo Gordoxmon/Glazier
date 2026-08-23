@@ -1,0 +1,42 @@
+# Provenance of the vendored tree (ADR-0009)
+#
+# This is NOT a submodule and NOT a flake input. It is a file copy at a fixed
+# commit, and upstream is FROZEN by decision: update churn was one of the two
+# pains that motivated the fork. Updating is a deliberate act — refetch into a
+# clean tree and diff against this one. Never pull on top.
+#
+# From the commit recorded here onwards, everything that changes under ii/ and
+# matugen/ is OURS. If this tree is still byte-identical to upstream months
+# from now, ADR-0009 says explicitly to reopen the decision: that is the signal
+# that the 1031 files became dead weight instead of a base.
+
+upstream_url      = https://github.com/end-4/dots-hyprland
+upstream_commit   = 42d0aae17b744a38cd05c9044c189bfc9b13869a
+upstream_date     = 2026-08-15T11:34:42+08:00
+vendored_on       = 2026-08-23
+vendored_subtrees = dots/.config/quickshell/ii -> home/quickshell/ii
+                    dots/.config/matugen       -> home/quickshell/matugen
+
+# The submodule is the number one silent failure of this adoption: a tarball or
+# a `cp -r` without it leaves an empty directory, and the shell will not load
+# because qs.modules.common.widgets.shapes does not resolve. The error message
+# never mentions submodules. ALWAYS check that
+# ii/modules/common/widgets/shapes/ShapeCanvas.qml exists after a refetch.
+submodule_path    = dots/.config/quickshell/ii/modules/common/widgets/shapes
+submodule_url     = https://github.com/end-4/rounded-polygon-qmljs
+submodule_commit  = e31ec4cb4ebf6a46b267f5c42eabf6874916fa16
+
+# The exact refetch command. --recurse-submodules and `cp -a` are not detail:
+# -a preserves the 4 relative symlinks under ii/assets/icons/ and the 31
+# executable bits on the scripts. `cp -r` copies symlink targets and drops +x.
+fetch = |
+  git clone --recurse-submodules https://github.com/end-4/dots-hyprland /tmp/ii-src
+  git -C /tmp/ii-src checkout 42d0aae17b744a38cd05c9044c189bfc9b13869a
+  git -C /tmp/ii-src submodule update --init --recursive
+  cp -a /tmp/ii-src/dots/.config/quickshell/ii      ~/nixos/home/quickshell/ii
+  cp -a /tmp/ii-src/dots/.config/matugen            ~/nixos/home/quickshell/matugen
+  find ~/nixos/home/quickshell -name '.git*' -not -name '.gitattributes' -exec rm -rf {} +
+
+# Upstream's install.sh NEVER runs on this machine (ADR-0002). It installs
+# packages with pacman/yay and writes over ~/.config. Here the dependencies
+# come from home/quickshell.nix and delivery is an out-of-store symlink.
