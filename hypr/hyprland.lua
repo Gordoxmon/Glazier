@@ -275,7 +275,7 @@ local closeWindowBind = hl.bind(mainMod .. " + Q", hl.dsp.window.close(), { desc
 -- closeWindowBind:set_enabled(false)
 hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"), { description = "Session: Exit Hyprland" })
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager), { description = "App: File manager" })
-hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }), { description = "Window: Toggle floating" })
+hl.bind(mainMod .. " + Space", hl.dsp.window.float({ action = "toggle" }), { description = "Window: Toggle floating" })
 -- Repointed from `menu` (rofi) to the shell's launcher: rofi is not installed on
 -- this machine, so this bind did nothing. See the SHELL section at the end.
 hl.bind(mainMod .. " + Super_L", hl.dsp.global("quickshell:searchToggleRelease"), { description = "Shell: Toggle search" })
@@ -395,12 +395,18 @@ hl.window_rule({
 -- returns "attempt to call a nil value". So the API is really there, and these
 -- binds are inert rather than broken while the shell is stopped.
 --
--- Conflicts with the binds above were resolved in favour of what was already
--- here, on the principle that window management is the compositor's and only
--- the shell keys belong to the shell. So SUPER+V stays float-toggle, SUPER+M
--- stays session-exit and SUPER+J stays togglesplit; the shell's versions of
--- those three moved to CTRL variants. The one bind that WAS taken over is
--- SUPER+Super_L, and only because it pointed at rofi, which is not installed.
+-- Conflicts with the binds above were first resolved in favour of whatever was
+-- already here, on the principle that window management is the compositor's and
+-- only shell keys belong to the shell. SUPER+M still stays session-exit and
+-- SUPER+J still stays togglesplit for that reason.
+--
+-- SUPER+V went the other way on 2026-08-23, by preference rather than by rule:
+-- float-toggle moved to SUPER+Space and the clipboard took SUPER+V, which is
+-- also where upstream puts it. The principle was a tie-breaker for keys nobody
+-- had an opinion about, not a law — once there is an opinion, it wins.
+--
+-- SUPER+Super_L was taken over from the start, and only because it pointed at
+-- rofi, which is not installed.
 
 -- Panels and overlays
 hl.bind(mainMod .. " + Tab",     hl.dsp.global("quickshell:overviewWorkspacesToggle"), { description = "Shell: Toggle overview" })
@@ -411,7 +417,7 @@ hl.bind(mainMod .. " + N",       hl.dsp.global("quickshell:sidebarRightToggle"),
 -- tres dedos para a tecla de ajuda. F1 e a convencao para ajuda e esta livre.
 hl.bind(mainMod .. " + F1",      hl.dsp.global("quickshell:cheatsheetToggle"),        { description = "Shell: Toggle cheatsheet" })
 hl.bind(mainMod .. " + Period",  hl.dsp.global("quickshell:overviewEmojiToggle"),     { description = "Shell: Emoji picker" })
-hl.bind("CTRL + " .. mainMod .. " + V", hl.dsp.global("quickshell:overviewClipboardToggle"), { description = "Shell: Clipboard history" })
+hl.bind(mainMod .. " + V",       hl.dsp.global("quickshell:overviewClipboardToggle"), { description = "Shell: Clipboard history" })
 
 -- Session menu. Ctrl+Alt+Delete is upstream's, and it is a better door than
 -- SUPER+M above, which exits Hyprland outright with no confirmation.
