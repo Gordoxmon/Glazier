@@ -276,7 +276,9 @@ local closeWindowBind = hl.bind(mainMod .. " + Q", hl.dsp.window.close())
 hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"))
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
-hl.bind(mainMod .. " + Super_L", hl.dsp.exec_cmd(menu))
+-- Repointed from `menu` (rofi) to the shell's launcher: rofi is not installed on
+-- this machine, so this bind did nothing. See the SHELL section at the end.
+hl.bind(mainMod .. " + Super_L", hl.dsp.global("quickshell:searchToggleRelease"))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))    -- dwindle only
 
@@ -373,3 +375,52 @@ hl.window_rule({
     move  = "20 monitor_h-120",
     float = true,
 })
+
+
+-------------------------------
+---- SHELL (end-4/quickshell)
+-------------------------------
+-- Added 2026-08-23 for the vendored end-4 shell (ADR-0009, register phase 4).
+--
+-- Why a handful of binds here rather than adopting end-4's own hypr/ tree:
+-- their shellOverrides/main.lua is written BY THE SHELL'S GUI, so it is
+-- generated state rather than config, and their env/execs assume Arch —
+-- hardcoded XDG_DATA_DIRS, QT_QPA_PLATFORMTHEME=kde, and autostart entries
+-- that are the wrong mechanism under UWSM, where systemd owns startup. This
+-- file already has the right shape: Lua, out-of-store, in git.
+--
+-- The mechanism is hl.dsp.global, the same one upstream uses. VERIFIED against
+-- this compositor before writing any of it (Hyprland 0.55.4): dispatching a
+-- global with nothing registered returns `ok`, while a nonexistent dispatcher
+-- returns "attempt to call a nil value". So the API is really there, and these
+-- binds are inert rather than broken while the shell is stopped.
+--
+-- Conflicts with the binds above were resolved in favour of what was already
+-- here, on the principle that window management is the compositor's and only
+-- the shell keys belong to the shell. So SUPER+V stays float-toggle, SUPER+M
+-- stays session-exit and SUPER+J stays togglesplit; the shell's versions of
+-- those three moved to CTRL variants. The one bind that WAS taken over is
+-- SUPER+Super_L, and only because it pointed at rofi, which is not installed.
+
+-- Panels and overlays
+hl.bind(mainMod .. " + Tab",     hl.dsp.global("quickshell:overviewWorkspacesToggle"))
+hl.bind(mainMod .. " + A",       hl.dsp.global("quickshell:sidebarLeftToggle"))
+hl.bind(mainMod .. " + N",       hl.dsp.global("quickshell:sidebarRightToggle"))
+hl.bind(mainMod .. " + Slash",   hl.dsp.global("quickshell:cheatsheetToggle"))
+hl.bind(mainMod .. " + Period",  hl.dsp.global("quickshell:overviewEmojiToggle"))
+hl.bind("CTRL + " .. mainMod .. " + V", hl.dsp.global("quickshell:overviewClipboardToggle"))
+
+-- Session menu. Ctrl+Alt+Delete is upstream's, and it is a better door than
+-- SUPER+M above, which exits Hyprland outright with no confirmation.
+hl.bind("CTRL + ALT + Delete",   hl.dsp.global("quickshell:sessionToggle"))
+
+-- Region capture. hyprshot stays installed and bound to nothing here; this is
+-- the shell's own snip, which hands off to swappy.
+hl.bind(mainMod .. " + SHIFT + S", hl.dsp.global("quickshell:regionScreenshot"))
+
+-- Restart the shell. NOT `killall qs quickshell`, which is what upstream binds
+-- and what cannot work here: the Nix wrapper renames the process, so a kill by
+-- name silently matches nothing. systemd owns the unit, so ask systemd.
+-- The same rename is why hypridle's lock_cmd guard needs fixing in phase 7.
+hl.bind("CTRL + " .. mainMod .. " + SHIFT + R",
+    hl.dsp.exec_cmd("systemctl --user restart quickshell"))
