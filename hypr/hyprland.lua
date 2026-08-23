@@ -316,8 +316,8 @@ hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_
 hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"),      { locked = true, repeating = true, description = "Media: Volume down" })
 hl.bind("XF86AudioMute",        hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"),     { locked = true, repeating = true, description = "Media: Mute output" })
 hl.bind("XF86AudioMicMute",     hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"),   { locked = true, repeating = true, description = "Media: Mute microphone" })
-hl.bind("XF86MonBrightnessUp",  hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%+"),                  { locked = true, repeating = true, description = "Media: Brightness up" })
-hl.bind("XF86MonBrightnessDown",hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%-"),                  { locked = true, repeating = true, description = "Media: Brightness down" })
+hl.bind("XF86MonBrightnessUp",  hl.dsp.exec_cmd("qs -c ii ipc call brightness increment || brightnessctl -e4 -n2 set 5%+"), { locked = true, repeating = true, description = "Media: Brightness up" })
+hl.bind("XF86MonBrightnessDown",hl.dsp.exec_cmd("qs -c ii ipc call brightness decrement || brightnessctl -e4 -n2 set 5%-"), { locked = true, repeating = true, description = "Media: Brightness down" })
 
 -- Requires playerctl
 hl.bind("XF86AudioNext",  hl.dsp.exec_cmd("playerctl next"),       { locked = true, description = "Media: Next track" })
@@ -377,59 +377,122 @@ hl.window_rule({
 })
 
 
--------------------------------
----- SHELL (end-4/quickshell)
--------------------------------
--- Added 2026-08-23 for the vendored end-4 shell (ADR-0009, register phase 4).
+
+--------------------------------------
+---- END-4 BINDS (shell + adopted) ----
+--------------------------------------
+-- Added 2026-08-23 for the vendored end-4 shell (ADR-0009, register phase 4),
+-- then filled out to upstream's full documented set on 2026-08-24.
 --
--- Why a handful of binds here rather than adopting end-4's own hypr/ tree:
--- their shellOverrides/main.lua is written BY THE SHELL'S GUI, so it is
--- generated state rather than config, and their env/execs assume Arch —
--- hardcoded XDG_DATA_DIRS, QT_QPA_PLATFORMTHEME=kde, and autostart entries
--- that are the wrong mechanism under UWSM, where systemd owns startup. This
--- file already has the right shape: Lua, out-of-store, in git.
+-- Why binds here rather than adopting end-4's own hypr/ tree: their
+-- shellOverrides/main.lua is written BY THE SHELL'S GUI, so it is generated
+-- state rather than config, and their env/execs assume Arch — hardcoded
+-- XDG_DATA_DIRS, QT_QPA_PLATFORMTHEME=kde, and autostart entries that are the
+-- wrong mechanism under UWSM, where systemd owns startup. This file already has
+-- the right shape: Lua, out-of-store, in git.
 --
 -- The mechanism is hl.dsp.global, the same one upstream uses. VERIFIED against
--- this compositor before writing any of it (Hyprland 0.55.4): dispatching a
--- global with nothing registered returns `ok`, while a nonexistent dispatcher
--- returns "attempt to call a nil value". So the API is really there, and these
--- binds are inert rather than broken while the shell is stopped.
+-- this compositor (Hyprland 0.55.4): dispatching a global with nothing
+-- registered returns `ok`, while a nonexistent dispatcher returns "attempt to
+-- call a nil value". So these are inert rather than broken while the shell is
+-- stopped.
 --
--- Conflicts with the binds above were first resolved in favour of whatever was
--- already here, on the principle that window management is the compositor's and
--- only shell keys belong to the shell. SUPER+M still stays session-exit and
--- SUPER+J still stays togglesplit for that reason.
+-- RULE OF THUMB when adding more: prefer hl.dsp.global over exec_cmd wherever
+-- the shell exposes a global for the job. A global runs INSIDE the shell, which
+-- has every dependency on its wrapper's PATH; an exec_cmd runs with the
+-- session's PATH, which has almost none of them. That is why the capture and
+-- OCR binds below are globals and not calls to grim/tesseract — those binaries
+-- exist for the shell and nowhere else.
 --
--- SUPER+V went the other way on 2026-08-23, by preference rather than by rule:
--- float-toggle moved to SUPER+Space and the clipboard took SUPER+V, which is
--- also where upstream puts it. The principle was a tie-breaker for keys nobody
--- had an opinion about, not a law — once there is an opinion, it wins.
---
--- SUPER+Super_L was taken over from the start, and only because it pointed at
--- rofi, which is not installed.
+-- Key choices that differ from upstream, and why:
+--   cheatsheet  F1, not Slash — slash is Shift+7 on the pt layout.
+--   media/bar   CTRL variants — SUPER+M and SUPER+J were already taken here.
+--   pin         SUPER+ALT+P — SUPER+P is pseudotile in this config.
+--   sleep       NOT BOUND. TM-0001 rules out suspend on this machine, and
+--               home/desktop.nix carries the same decision for hypridle.
+--   browser,    NOT BOUND. Nothing suitable is installed, and a bind pointing
+--   editors,    at a missing binary is a bind that silently does nothing —
+--   office,     the exact trap SUPER+Super_L was already in with rofi.
+--   task mgr,   Bind them the day the app is installed, not before.
+--   volume mixer
 
--- Panels and overlays
+-- Panels
 hl.bind(mainMod .. " + Tab",     hl.dsp.global("quickshell:overviewWorkspacesToggle"), { description = "Shell: Toggle overview" })
-hl.bind(mainMod .. " + A",       hl.dsp.global("quickshell:sidebarLeftToggle"),       { description = "Shell: Toggle left sidebar" })
-hl.bind(mainMod .. " + N",       hl.dsp.global("quickshell:sidebarRightToggle"),      { description = "Shell: Toggle right sidebar" })
--- F1 e nao Slash: o teclado desta maquina e kb_layout = "pt", onde a barra e
--- Shift+7. `SUPER + Slash` seria na pratica SUPER+SHIFT+7, que e um acorde de
--- tres dedos para a tecla de ajuda. F1 e a convencao para ajuda e esta livre.
-hl.bind(mainMod .. " + F1",      hl.dsp.global("quickshell:cheatsheetToggle"),        { description = "Shell: Toggle cheatsheet" })
-hl.bind(mainMod .. " + Period",  hl.dsp.global("quickshell:overviewEmojiToggle"),     { description = "Shell: Emoji picker" })
+hl.bind(mainMod .. " + A",       hl.dsp.global("quickshell:sidebarLeftToggle"),        { description = "Shell: Toggle left sidebar" })
+hl.bind(mainMod .. " + ALT + A", hl.dsp.global("quickshell:sidebarLeftToggleDetach"),  { description = "Shell: Detach left sidebar" })
+hl.bind(mainMod .. " + N",       hl.dsp.global("quickshell:sidebarRightToggle"),       { description = "Shell: Toggle right sidebar" })
+hl.bind(mainMod .. " + F1",      hl.dsp.global("quickshell:cheatsheetToggle"),         { description = "Shell: Toggle cheatsheet" })
+hl.bind(mainMod .. " + K",       hl.dsp.global("quickshell:oskToggle"),                { description = "Shell: Toggle on-screen keyboard" })
+hl.bind(mainMod .. " + G",       hl.dsp.global("quickshell:overlayToggle"),            { description = "Shell: Toggle widget overlay" })
+hl.bind("CTRL + " .. mainMod .. " + M", hl.dsp.global("quickshell:mediaControlsToggle"), { description = "Shell: Toggle media controls" })
+hl.bind("CTRL + " .. mainMod .. " + J", hl.dsp.global("quickshell:barToggle"),           { description = "Shell: Toggle bar" })
+hl.bind("CTRL + " .. mainMod .. " + P", hl.dsp.global("quickshell:panelFamilyCycle"),    { description = "Shell: Cycle panel family" })
+
+-- Theme and wallpaper. These are the end-4 pipeline ADR-0010 handed ownership
+-- to; the old setwall entry point is being retired in register phase 6.
+hl.bind("CTRL + " .. mainMod .. " + T",           hl.dsp.global("quickshell:wallpaperSelectorToggle"), { description = "Shell: Change wallpaper" })
+hl.bind("CTRL + " .. mainMod .. " + ALT + T",     hl.dsp.global("quickshell:wallpaperSelectorRandom"), { description = "Shell: Random wallpaper" })
+hl.bind("CTRL + " .. mainMod .. " + SHIFT + D",   hl.dsp.global("quickshell:toggleLightDark"),         { description = "Shell: Toggle light/dark mode" })
+
+-- Clipboard and emoji
 hl.bind(mainMod .. " + V",       hl.dsp.global("quickshell:overviewClipboardToggle"), { description = "Shell: Clipboard history" })
+hl.bind(mainMod .. " + Period",  hl.dsp.global("quickshell:overviewEmojiToggle"),     { description = "Shell: Emoji picker" })
 
--- Session menu. Ctrl+Alt+Delete is upstream's, and it is a better door than
--- SUPER+M above, which exits Hyprland outright with no confirmation.
-hl.bind("CTRL + ALT + Delete",   hl.dsp.global("quickshell:sessionToggle"),           { description = "Session: Session menu" })
+-- Capture, OCR and recording. All globals on purpose — see the PATH note above.
+hl.bind(mainMod .. " + SHIFT + S",       hl.dsp.global("quickshell:regionScreenshot"),      { description = "Utilities: Screen snip" })
+hl.bind(mainMod .. " + SHIFT + A",       hl.dsp.global("quickshell:regionSearch"),          { description = "Utilities: Reverse image search" })
+hl.bind(mainMod .. " + SHIFT + X",       hl.dsp.global("quickshell:regionOcr"),             { description = "Utilities: Character recognition" })
+hl.bind(mainMod .. " + SHIFT + T",       hl.dsp.global("quickshell:screenTranslate"),       { description = "Utilities: Translate screen content" })
+hl.bind(mainMod .. " + SHIFT + R",       hl.dsp.global("quickshell:regionRecord"),          { description = "Utilities: Record region" })
+hl.bind(mainMod .. " + SHIFT + ALT + R", hl.dsp.global("quickshell:regionRecordWithSound"), { description = "Utilities: Record region with sound" })
 
--- Region capture. hyprshot stays installed and bound to nothing here; this is
--- the shell's own snip, which hands off to swappy.
-hl.bind(mainMod .. " + SHIFT + S", hl.dsp.global("quickshell:regionScreenshot"),      { description = "Utilities: Screen snip" })
+-- Whole-screen capture. hyprshot rather than the shell, because it is already
+-- installed session-wide (home/desktop.nix) and wraps grim + slurp for us.
+hl.bind("Print",        hl.dsp.exec_cmd("hyprshot -m output --clipboard-only"), { description = "Utilities: Screenshot to clipboard" })
+hl.bind("CTRL + Print", hl.dsp.exec_cmd("hyprshot -m output"),                  { description = "Utilities: Screenshot to file" })
+hl.bind(mainMod .. " + SHIFT + C", hl.dsp.exec_cmd("hyprpicker -a"),            { description = "Utilities: Pick colour to clipboard" })
+
+-- Session. Lock goes through logind rather than calling a locker directly, so
+-- it takes the same path as the idle timeout and cannot stack two lockers.
+hl.bind("CTRL + ALT + Delete", hl.dsp.global("quickshell:sessionToggle"),  { description = "Session: Session menu" })
+hl.bind(mainMod .. " + L",     hl.dsp.exec_cmd("loginctl lock-session"),   { description = "Session: Lock" })
+hl.bind("CTRL + SHIFT + ALT + " .. mainMod .. " + Delete", hl.dsp.exec_cmd("systemctl poweroff"), { description = "Session: Shut down" })
+
+-- The shell's own settings GUI. This is where the shell's state lives
+-- (~/.config/illogical-impulse/), which ADR-0002 carves out as the deliberate
+-- exception to Home Manager owning ~/.config.
+hl.bind(mainMod .. " + I", hl.dsp.exec_cmd("qs -p ~/.config/quickshell/ii/settings.qml"), { description = "App: Shell settings" })
 
 -- Restart the shell. NOT `killall qs quickshell`, which is what upstream binds
 -- and what cannot work here: the Nix wrapper renames the process, so a kill by
 -- name silently matches nothing. systemd owns the unit, so ask systemd.
--- The same rename is why hypridle's lock_cmd guard needs fixing in phase 7.
-hl.bind("CTRL + " .. mainMod .. " + SHIFT + R",
-    hl.dsp.exec_cmd("systemctl --user restart quickshell"), { description = "Shell: Restart shell" })
+hl.bind("CTRL + " .. mainMod .. " + R", hl.dsp.exec_cmd("systemctl --user restart quickshell"), { description = "Shell: Restart shell" })
+
+-- Window states the stock config never bound at all.
+hl.bind(mainMod .. " + F",             hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }), { description = "Window: Fullscreen" })
+hl.bind(mainMod .. " + D",             hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle" }),  { description = "Window: Maximize" })
+hl.bind(mainMod .. " + ALT + F",       hl.dsp.window.fullscreen_state({ internal = 0, client = 3, action = "toggle" }), { description = "Window: Fullscreen spoof" })
+hl.bind(mainMod .. " + ALT + P",       hl.dsp.window.pin(),                { description = "Window: Pin" })
+hl.bind(mainMod .. " + SHIFT + ALT + Q", hl.dsp.exec_cmd("hyprctl kill"),  { description = "Window: Forcefully zap a window" })
+
+-- Media on the letter keys, for keyboards without the XF86 block. The XF86
+-- binds further up were dead until 2026-08-24: they call playerctl and
+-- brightnessctl, and neither was installed. Both are now in home/desktop.nix.
+hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("playerctl next"),                        { locked = true, description = "Media: Next track" })
+hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd("playerctl previous"),                    { locked = true, description = "Media: Previous track" })
+hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd("playerctl play-pause"),                  { locked = true, description = "Media: Play/pause" })
+hl.bind(mainMod .. " + SHIFT + M", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_SINK@ toggle"),   { locked = true, description = "Media: Toggle mute" })
+hl.bind(mainMod .. " + ALT + M",   hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_SOURCE@ toggle"), { locked = true, description = "Media: Toggle mic" })
+
+-- Cursor zoom, clamped to 1.0..3.0. Lifted from upstream; it reads and writes
+-- the live cursor:zoom_factor rather than tracking state of its own, so it
+-- stays correct if the value is changed by any other route.
+local function zoomBy(delta)
+    local current = hl.get_config("cursor:zoom_factor")
+    local target = current + delta
+    if target > 3.0 then target = 3.0 end
+    if target < 1.0 then target = 1.0 end
+    hl.config({ cursor = { zoom_factor = target } })
+end
+hl.bind(mainMod .. " + Minus", function() zoomBy(-0.3) end, { repeating = true, description = "Screen: Zoom out" })
+hl.bind(mainMod .. " + Equal", function() zoomBy(0.3) end,  { repeating = true, description = "Screen: Zoom in" })
