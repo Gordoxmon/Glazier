@@ -406,7 +406,10 @@ hl.window_rule({
 hl.bind(mainMod .. " + Tab",     hl.dsp.global("quickshell:overviewWorkspacesToggle"))
 hl.bind(mainMod .. " + A",       hl.dsp.global("quickshell:sidebarLeftToggle"))
 hl.bind(mainMod .. " + N",       hl.dsp.global("quickshell:sidebarRightToggle"))
-hl.bind(mainMod .. " + Slash",   hl.dsp.global("quickshell:cheatsheetToggle"))
+-- F1 e nao Slash: o teclado desta maquina e kb_layout = "pt", onde a barra e
+-- Shift+7. `SUPER + Slash` seria na pratica SUPER+SHIFT+7, que e um acorde de
+-- tres dedos para a tecla de ajuda. F1 e a convencao para ajuda e esta livre.
+hl.bind(mainMod .. " + F1",      hl.dsp.global("quickshell:cheatsheetToggle"))
 hl.bind(mainMod .. " + Period",  hl.dsp.global("quickshell:overviewEmojiToggle"))
 hl.bind("CTRL + " .. mainMod .. " + V", hl.dsp.global("quickshell:overviewClipboardToggle"))
 
