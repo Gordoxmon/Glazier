@@ -115,25 +115,41 @@ Column {
         return bind.description.indexOf(":") === -1;
     }
 
+    // LOCAL CHANGE (2026-08-23, ADR-0009). The three functions below collapse
+    // repeated bindings — the ten workspace keys become one "<Number>" row, the
+    // four arrows become one "<Direction>" row. Upstream matched on "contains",
+    // which is too loose in two ways that both show up on this machine:
+    //
+    //   F1 contains a "1", so the cheatsheet key rendered as "F<Number>". Ours
+    //   binds the cheatsheet itself to SUPER+F1, so the one row a first-time
+    //   user goes looking for was the broken one. Upstream never sees this
+    //   because SUPER+Slash has no digit in it.
+    //
+    //   hyprctl reports arrow keys lowercase ("left"), and the replace looked
+    //   for "Left", so the key column never generalised while the description
+    //   column did — "left" paired with "Focus <Direction>".
+    //
+    // Both fixed by matching the WHOLE key instead of a substring. A key is a
+    // repetition if it IS a digit, not if it merely contains one.
     function containsNonFirstRepetitive(bind) {
         const key = bind.key;
         if (key.includes("mouse") || key.includes("page")) return false;
-        // Contains non-1 number
-        if (/\d/.test(key) && !key.includes("1")) return true;
-        // Contains non-left direction
-        if (/^(right|up|down)\b/i.test(key)) return true;
+        // A bare number other than 1 — the 2..9,0 workspace keys
+        if (/^\d+$/.test(key) && key !== "1") return true;
+        // A direction other than left
+        if (/^(right|up|down)$/i.test(key)) return true;
         return false;
     }
 
     function containsFirstRepetitive(bind) {
         const key = bind.key;
-        return key.includes("1") || /left/i.test(key);
+        return key === "1" || /^left$/i.test(key);
     }
 
     function transformKey(key) {
         const replaced = root.keySubstitutions[key] || key;
-        const denumbered = replaced.replace("1", "<Number>");
-        const dedirectioned = denumbered.replace("Left", "<Direction>");
+        const denumbered = (replaced === "1") ? "<Number>" : replaced;
+        const dedirectioned = /^left$/i.test(denumbered) ? "<Direction>" : denumbered;
         return dedirectioned;
     }
 

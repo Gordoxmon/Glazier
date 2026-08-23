@@ -270,60 +270,60 @@ hl.device({
 local mainMod = "SUPER" -- Sets "Windows" key as main modifier
 
 -- Example binds, see https://wiki.hypr.land/Configuring/Basics/Binds/ for more
-hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd(terminal))
-local closeWindowBind = hl.bind(mainMod .. " + Q", hl.dsp.window.close())
+hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd(terminal), { description = "App: Terminal" })
+local closeWindowBind = hl.bind(mainMod .. " + Q", hl.dsp.window.close(), { description = "Window: Close" })
 -- closeWindowBind:set_enabled(false)
-hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"))
-hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
-hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
+hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"), { description = "Session: Exit Hyprland" })
+hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager), { description = "App: File manager" })
+hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }), { description = "Window: Toggle floating" })
 -- Repointed from `menu` (rofi) to the shell's launcher: rofi is not installed on
 -- this machine, so this bind did nothing. See the SHELL section at the end.
-hl.bind(mainMod .. " + Super_L", hl.dsp.global("quickshell:searchToggleRelease"))
-hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
-hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))    -- dwindle only
+hl.bind(mainMod .. " + Super_L", hl.dsp.global("quickshell:searchToggleRelease"), { description = "Shell: Toggle search" })
+hl.bind(mainMod .. " + P", hl.dsp.window.pseudo(), { description = "Window: Toggle pseudotile" })
+hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"), { description = "Window: Toggle split direction" }) -- dwindle only
 
 -- Send the focused window to the other monitor
-hl.bind(mainMod .. " + Alt_L", hl.dsp.window.move({ monitor = "+1" }))
+hl.bind(mainMod .. " + Alt_L", hl.dsp.window.move({ monitor = "+1" }), { description = "Window: Send to other monitor" })
 
 -- Move focus with mainMod + arrow keys
-hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "left" }))
-hl.bind(mainMod .. " + right", hl.dsp.focus({ direction = "right" }))
-hl.bind(mainMod .. " + up",    hl.dsp.focus({ direction = "up" }))
-hl.bind(mainMod .. " + down",  hl.dsp.focus({ direction = "down" }))
+hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "left" }),  { description = "Window: Focus left" })
+hl.bind(mainMod .. " + right", hl.dsp.focus({ direction = "right" }), { description = "Window: Focus right" })
+hl.bind(mainMod .. " + up",    hl.dsp.focus({ direction = "up" }),    { description = "Window: Focus up" })
+hl.bind(mainMod .. " + down",  hl.dsp.focus({ direction = "down" }),  { description = "Window: Focus down" })
 
 -- Switch workspaces with mainMod + [0-9]
 -- Move active window to a workspace with mainMod + SHIFT + [0-9]
 for i = 1, 10 do
     local key = i % 10 -- 10 maps to key 0
-    hl.bind(mainMod .. " + " .. key,             hl.dsp.focus({ workspace = i}))
-    hl.bind(mainMod .. " + ALT + " .. key,     hl.dsp.window.move({ workspace = i }))
+    hl.bind(mainMod .. " + " .. key,         hl.dsp.focus({ workspace = i }),              { description = "Workspace: Switch to " .. i })
+    hl.bind(mainMod .. " + ALT + " .. key,   hl.dsp.window.move({ workspace = i }),        { description = "Workspace: Move window to " .. i })
 end
 
 -- Example special workspace (scratchpad)
-hl.bind(mainMod .. " + S",         hl.dsp.workspace.toggle_special("magic"))
-hl.bind(mainMod .. " + ALT + S", hl.dsp.window.move({ workspace = "special:magic" }))
+hl.bind(mainMod .. " + S",       hl.dsp.workspace.toggle_special("magic"),          { description = "Workspace: Toggle scratchpad" })
+hl.bind(mainMod .. " + ALT + S", hl.dsp.window.move({ workspace = "special:magic" }), { description = "Workspace: Move window to scratchpad" })
 
 -- Scroll through existing workspaces with mainMod + scroll
-hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
-hl.bind(mainMod .. " + mouse_up",   hl.dsp.focus({ workspace = "e-1" }))
+hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }), { description = "Workspace: Next" })
+hl.bind(mainMod .. " + mouse_up",   hl.dsp.focus({ workspace = "e-1" }), { description = "Workspace: Previous" })
 
 -- Move/resize windows with mainMod + LMB/RMB and dragging
-hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true })
-hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
+hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true, description = "Window: Drag to move" })
+hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true, description = "Window: Drag to resize" })
 
 -- Laptop multimedia keys for volume and LCD brightness
-hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"), { locked = true, repeating = true })
-hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"),      { locked = true, repeating = true })
-hl.bind("XF86AudioMute",        hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"),     { locked = true, repeating = true })
-hl.bind("XF86AudioMicMute",     hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"),   { locked = true, repeating = true })
-hl.bind("XF86MonBrightnessUp",  hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%+"),                  { locked = true, repeating = true })
-hl.bind("XF86MonBrightnessDown",hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%-"),                  { locked = true, repeating = true })
+hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"), { locked = true, repeating = true, description = "Media: Volume up" })
+hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"),      { locked = true, repeating = true, description = "Media: Volume down" })
+hl.bind("XF86AudioMute",        hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"),     { locked = true, repeating = true, description = "Media: Mute output" })
+hl.bind("XF86AudioMicMute",     hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"),   { locked = true, repeating = true, description = "Media: Mute microphone" })
+hl.bind("XF86MonBrightnessUp",  hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%+"),                  { locked = true, repeating = true, description = "Media: Brightness up" })
+hl.bind("XF86MonBrightnessDown",hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%-"),                  { locked = true, repeating = true, description = "Media: Brightness down" })
 
 -- Requires playerctl
-hl.bind("XF86AudioNext",  hl.dsp.exec_cmd("playerctl next"),       { locked = true })
-hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
-hl.bind("XF86AudioPlay",  hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
-hl.bind("XF86AudioPrev",  hl.dsp.exec_cmd("playerctl previous"),   { locked = true })
+hl.bind("XF86AudioNext",  hl.dsp.exec_cmd("playerctl next"),       { locked = true, description = "Media: Next track" })
+hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true, description = "Media: Play/pause" })
+hl.bind("XF86AudioPlay",  hl.dsp.exec_cmd("playerctl play-pause"), { locked = true, description = "Media: Play/pause" })
+hl.bind("XF86AudioPrev",  hl.dsp.exec_cmd("playerctl previous"),   { locked = true, description = "Media: Previous track" })
 
 
 --------------------------------
@@ -403,27 +403,27 @@ hl.window_rule({
 -- SUPER+Super_L, and only because it pointed at rofi, which is not installed.
 
 -- Panels and overlays
-hl.bind(mainMod .. " + Tab",     hl.dsp.global("quickshell:overviewWorkspacesToggle"))
-hl.bind(mainMod .. " + A",       hl.dsp.global("quickshell:sidebarLeftToggle"))
-hl.bind(mainMod .. " + N",       hl.dsp.global("quickshell:sidebarRightToggle"))
+hl.bind(mainMod .. " + Tab",     hl.dsp.global("quickshell:overviewWorkspacesToggle"), { description = "Shell: Toggle overview" })
+hl.bind(mainMod .. " + A",       hl.dsp.global("quickshell:sidebarLeftToggle"),       { description = "Shell: Toggle left sidebar" })
+hl.bind(mainMod .. " + N",       hl.dsp.global("quickshell:sidebarRightToggle"),      { description = "Shell: Toggle right sidebar" })
 -- F1 e nao Slash: o teclado desta maquina e kb_layout = "pt", onde a barra e
 -- Shift+7. `SUPER + Slash` seria na pratica SUPER+SHIFT+7, que e um acorde de
 -- tres dedos para a tecla de ajuda. F1 e a convencao para ajuda e esta livre.
-hl.bind(mainMod .. " + F1",      hl.dsp.global("quickshell:cheatsheetToggle"))
-hl.bind(mainMod .. " + Period",  hl.dsp.global("quickshell:overviewEmojiToggle"))
-hl.bind("CTRL + " .. mainMod .. " + V", hl.dsp.global("quickshell:overviewClipboardToggle"))
+hl.bind(mainMod .. " + F1",      hl.dsp.global("quickshell:cheatsheetToggle"),        { description = "Shell: Toggle cheatsheet" })
+hl.bind(mainMod .. " + Period",  hl.dsp.global("quickshell:overviewEmojiToggle"),     { description = "Shell: Emoji picker" })
+hl.bind("CTRL + " .. mainMod .. " + V", hl.dsp.global("quickshell:overviewClipboardToggle"), { description = "Shell: Clipboard history" })
 
 -- Session menu. Ctrl+Alt+Delete is upstream's, and it is a better door than
 -- SUPER+M above, which exits Hyprland outright with no confirmation.
-hl.bind("CTRL + ALT + Delete",   hl.dsp.global("quickshell:sessionToggle"))
+hl.bind("CTRL + ALT + Delete",   hl.dsp.global("quickshell:sessionToggle"),           { description = "Session: Session menu" })
 
 -- Region capture. hyprshot stays installed and bound to nothing here; this is
 -- the shell's own snip, which hands off to swappy.
-hl.bind(mainMod .. " + SHIFT + S", hl.dsp.global("quickshell:regionScreenshot"))
+hl.bind(mainMod .. " + SHIFT + S", hl.dsp.global("quickshell:regionScreenshot"),      { description = "Utilities: Screen snip" })
 
 -- Restart the shell. NOT `killall qs quickshell`, which is what upstream binds
 -- and what cannot work here: the Nix wrapper renames the process, so a kill by
 -- name silently matches nothing. systemd owns the unit, so ask systemd.
 -- The same rename is why hypridle's lock_cmd guard needs fixing in phase 7.
 hl.bind("CTRL + " .. mainMod .. " + SHIFT + R",
-    hl.dsp.exec_cmd("systemctl --user restart quickshell"))
+    hl.dsp.exec_cmd("systemctl --user restart quickshell"), { description = "Shell: Restart shell" })
