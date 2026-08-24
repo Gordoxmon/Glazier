@@ -146,8 +146,30 @@ Column {
         return key === "1" || /^left$/i.test(key);
     }
 
+    // LOCAL CHANGE (2026-08-24, ADR-0009). Media keys arrive from hyprctl under
+    // their raw X11 names — XF86AudioRaiseVolume, XF86MonBrightnessDown — and
+    // upstream's keySubstitutions map has no entry for any of them, so the
+    // cheatsheet printed the identifier verbatim. Eleven rows of "XF86Audio..."
+    // is the widest column on the page and the least readable thing on it.
+    //
+    // Derived rather than tabulated: drop the XF86 prefix, drop the Audio/Mon
+    // namespace, then split the camel humps. RaiseVolume becomes "Raise Volume",
+    // MonBrightnessUp becomes "Brightness Up", AudioMicMute becomes "Mic Mute".
+    // A table would have to be extended every time a key is bound that nobody
+    // thought of; this handles XF86Search or XF86Calculator on the day someone
+    // binds one, without being touched.
+    //
+    // keySubstitutions still wins if it has an entry, so an explicit override
+    // remains possible.
+    function prettifyMediaKey(key) {
+        if (!key.startsWith("XF86")) return key;
+        return key.slice(4)
+            .replace(/^(Audio|Mon)/, "")
+            .replace(/([a-z])([A-Z])/g, "$1 $2");
+    }
+
     function transformKey(key) {
-        const replaced = root.keySubstitutions[key] || key;
+        const replaced = root.keySubstitutions[key] || root.prettifyMediaKey(key);
         const denumbered = (replaced === "1") ? "<Number>" : replaced;
         const dedirectioned = /^left$/i.test(denumbered) ? "<Direction>" : denumbered;
         return dedirectioned;
