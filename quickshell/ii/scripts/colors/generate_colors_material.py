@@ -1,4 +1,14 @@
 #!/usr/bin/env -S\_/bin/sh\_-c\_"source\_\$(eval\_echo\_\$ILLOGICAL_IMPULSE_VIRTUAL_ENV)/bin/activate&&exec\_python\_-E\_"\$0"\_"\$@""
+# LOCAL CHANGE (2026-08-24, ADR-0009). Line ~140 used to read
+# material_colors['primary_paletteKeyColor'], a mixed snake/camel name that
+# does not exist on this machine's materialyoucolor (nixpkgs 3.0.2). The class
+# actually exposes `primaryPaletteKeyColor` (pure camelCase) — confirmed by
+# introspecting the live package, not guessed — so every entry that reaches
+# material_colors comes in under that name, and the underscored lookup always
+# KeyErrors before a single colour gets written anywhere. Every other key this
+# script reads (onSuccess, surfaceContainerLow, onSurface, ...) was already
+# correct camelCase; this was the one name upstream's script got in a form
+# that never matched a packaged materialyoucolor.
 import argparse
 import math
 import json
@@ -137,7 +147,7 @@ if args.termscheme is not None:
         json_termscheme = f.read()
     term_source_colors = json.loads(json_termscheme)['dark' if darkmode else 'light']
 
-    primary_color_argb = hex_to_argb(material_colors['primary_paletteKeyColor'])
+    primary_color_argb = hex_to_argb(material_colors['primaryPaletteKeyColor'])
     for color, val in term_source_colors.items():
         if(args.scheme == 'monochrome') :
             term_colors[color] = val
