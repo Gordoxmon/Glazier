@@ -96,84 +96,137 @@ hl.env("HYPRCURSOR_SIZE", "24")
 -----------------------
 ---- LOOK AND FEEL ----
 -----------------------
-
--- Refer to https://wiki.hypr.land/Configuring/Basics/Variables/
+--
+-- Adopted from end-4 on 2026-08-24 — the VALUES, not their hypr/ tree. The
+-- TM-0002 decision not to adopt that tree still stands (shellOverrides is
+-- machine-written, env/execs assume Arch); what was missing was that the tree
+-- carries the look, so declining it left the desktop on stock Hyprland while
+-- the shell above it was end-4. That mismatch is what this closes.
+--
+-- Source: dots/.config/hypr/hyprland/general.lua at the pinned commit in
+-- home/quickshell/UPSTREAM. Kept verbatim where it is taste (gaps, rounding,
+-- blur, the whole animation set) and dropped where it is theirs and not ours —
+-- their kb_layout is "us", their monitors, their NVIDIA assumptions.
 hl.config({
     general = {
-        gaps_in  = 5,
-        gaps_out = 20,
+        -- Much tighter than the stock 5/20. The bar and panels sit close to
+        -- the edge, so wide outer gaps read as a mistake rather than as air.
+        gaps_in         = 4,
+        gaps_out        = 5,
+        gaps_workspaces = 50,
 
-        border_size = 2,
+        border_size = 1,
 
+        -- Placeholder only. The real values arrive from the wallpaper via
+        -- matugen, in the require() at the very end of this file — see the
+        -- note there for why the order matters.
         col = {
-            active_border   = { colors = {"rgba(33ccffee)", "rgba(00ff99ee)"}, angle = 45 },
-            inactive_border = "rgba(595959aa)",
+            active_border   = "rgba(0DB7D455)",
+            inactive_border = "rgba(31313600)",
         },
 
-        -- Set to true to enable resizing windows by clicking and dragging on borders and gaps
-        resize_on_border = false,
+        resize_on_border = true,
+        no_focus_fallback = true,
 
-        -- Please see https://wiki.hypr.land/Configuring/Advanced-and-Cool/Tearing/ before you turn this on
-        allow_tearing = false,
+        -- Only enables the `immediate` window rule; nothing tears without it.
+        allow_tearing = true,
+
+        snap = {
+            enabled     = true,
+            window_gap  = 4,
+            monitor_gap = 5,
+            respect_gaps = true,
+        },
 
         layout = "dwindle",
     },
 
     decoration = {
-        rounding       = 10,
-        rounding_power = 2,
+        -- rounding_power: 2 = circular, higher = squircle. 2.5 is end-4's,
+        -- and it is the difference between "rounded" and "obviously rounded".
+        rounding       = 18,
+        rounding_power = 2.5,
 
-        -- Change transparency of focused and unfocused windows
         active_opacity   = 1.0,
         inactive_opacity = 1.0,
 
-        shadow = {
-            enabled      = true,
-            range        = 4,
-            render_power = 3,
-            color        = 0xee1a1a1a,
+        blur = {
+            enabled                   = true,
+            xray                      = true,
+            special                   = false,
+            new_optimizations         = true,
+            size                      = 10,
+            passes                    = 3,
+            brightness                = 1,
+            noise                     = 0.05,
+            contrast                  = 0.89,
+            vibrancy                  = 0.5,
+            vibrancy_darkness         = 0.5,
+            popups                    = false,
+            popups_ignorealpha        = 0.6,
+            input_methods             = true,
+            input_methods_ignorealpha = 0.8,
         },
 
-        blur = {
-            enabled   = true,
-            size      = 3,
-            passes    = 1,
-            vibrancy  = 0.1696,
+        shadow = {
+            enabled      = true,
+            range        = 20,
+            offset       = {0, 2},
+            render_power = 10,
+            color        = "rgba(00000020)",
         },
+
+        dim_inactive = true,
+        dim_strength = 0.05,
+        dim_special  = 0.2,
     },
 
     animations = {
         enabled = true,
     },
+
+    dwindle = {
+        preserve_split = true,
+        smart_split    = false,
+        smart_resizing = false,
+    },
 })
 
--- Default curves and animations, see https://wiki.hypr.land/Configuring/Advanced-and-Cool/Animations/
-hl.curve("easeOutQuint",   { type = "bezier", points = { {0.23, 1},    {0.32, 1}    } })
-hl.curve("easeInOutCubic", { type = "bezier", points = { {0.65, 0.05}, {0.36, 1}    } })
-hl.curve("linear",         { type = "bezier", points = { {0, 0},       {1, 1}       } })
-hl.curve("almostLinear",   { type = "bezier", points = { {0.5, 0.5},   {0.75, 1}    } })
-hl.curve("quick",          { type = "bezier", points = { {0.15, 0},    {0.1, 1}     } })
+-- Curves. Named after Material 3's motion vocabulary, which is what the shell
+-- itself animates with — matching them is what makes a window opening and a
+-- panel opening feel like the same desktop rather than two programs.
+hl.curve("expressiveFastSpatial",    { type = "bezier", points = { {0.42, 1.67}, {0.21, 0.90} } })
+hl.curve("expressiveSlowSpatial",    { type = "bezier", points = { {0.39, 1.29}, {0.35, 0.98} } })
+hl.curve("expressiveDefaultSpatial", { type = "bezier", points = { {0.38, 1.21}, {0.22, 1.00} } })
+hl.curve("emphasizedDecel",          { type = "bezier", points = { {0.05, 0.7},  {0.1,  1}    } })
+hl.curve("emphasizedAccel",          { type = "bezier", points = { {0.3,  0},    {0.8,  0.15} } })
+hl.curve("standardDecel",            { type = "bezier", points = { {0,    0},    {0,    1}    } })
+hl.curve("menu_decel",               { type = "bezier", points = { {0.1,  1},    {0,    1}    } })
+hl.curve("menu_accel",               { type = "bezier", points = { {0.52, 0.03}, {0.72, 0.08} } })
+hl.curve("stall",                    { type = "bezier", points = { {1,   -0.1},  {0.7,  0.85} } })
 
--- Default springs
-hl.curve("easy",           { type = "spring", mass = 1, stiffness = 71.2633, dampening = 15.8273644 })
+-- Windows
+hl.animation({ leaf = "windowsIn",   enabled = true, speed = 3,  bezier = "emphasizedDecel", style = "popin 80%" })
+hl.animation({ leaf = "windowsOut",  enabled = true, speed = 2,  bezier = "emphasizedDecel", style = "popin 90%" })
+hl.animation({ leaf = "windowsMove", enabled = true, speed = 3,  bezier = "emphasizedDecel", style = "slide" })
+hl.animation({ leaf = "fadeIn",      enabled = true, speed = 3,  bezier = "emphasizedDecel" })
+hl.animation({ leaf = "fadeOut",     enabled = true, speed = 2,  bezier = "emphasizedDecel" })
+hl.animation({ leaf = "border",      enabled = true, speed = 10, bezier = "emphasizedDecel" })
 
-hl.animation({ leaf = "global",        enabled = true,  speed = 10,   bezier = "default" })
-hl.animation({ leaf = "border",        enabled = true,  speed = 5.39, bezier = "easeOutQuint" })
-hl.animation({ leaf = "windows",       enabled = true,  speed = 4.79, spring = "easy" })
-hl.animation({ leaf = "windowsIn",     enabled = true,  speed = 4.1,  spring = "easy",         style = "popin 87%" })
-hl.animation({ leaf = "windowsOut",    enabled = true,  speed = 1.49, bezier = "linear",       style = "popin 87%" })
-hl.animation({ leaf = "fadeIn",        enabled = true,  speed = 1.73, bezier = "almostLinear" })
-hl.animation({ leaf = "fadeOut",       enabled = true,  speed = 1.46, bezier = "almostLinear" })
-hl.animation({ leaf = "fade",          enabled = true,  speed = 3.03, bezier = "quick" })
-hl.animation({ leaf = "layers",        enabled = true,  speed = 3.81, bezier = "easeOutQuint" })
-hl.animation({ leaf = "layersIn",      enabled = true,  speed = 4,    bezier = "easeOutQuint", style = "fade" })
-hl.animation({ leaf = "layersOut",     enabled = true,  speed = 1.5,  bezier = "linear",       style = "fade" })
-hl.animation({ leaf = "fadeLayersIn",  enabled = true,  speed = 1.79, bezier = "almostLinear" })
-hl.animation({ leaf = "fadeLayersOut", enabled = true,  speed = 1.39, bezier = "almostLinear" })
-hl.animation({ leaf = "workspaces",    enabled = true,  speed = 1.94, bezier = "almostLinear", style = "fade" })
-hl.animation({ leaf = "workspacesIn",  enabled = true,  speed = 1.21, bezier = "almostLinear", style = "fade" })
-hl.animation({ leaf = "workspacesOut", enabled = true,  speed = 1.94, bezier = "almostLinear", style = "fade" })
-hl.animation({ leaf = "zoomFactor",    enabled = true,  speed = 7,    bezier = "quick" })
+-- Layers — these are the shell's own surfaces, so they matter more here than
+-- window animations do.
+hl.animation({ leaf = "layersIn",       enabled = true, speed = 2.7, bezier = "emphasizedDecel", style = "popin 93%" })
+hl.animation({ leaf = "layersOut",      enabled = true, speed = 2.4, bezier = "menu_accel",      style = "popin 94%" })
+hl.animation({ leaf = "fadeLayersIn",   enabled = true, speed = 0.5, bezier = "menu_decel" })
+hl.animation({ leaf = "fadeLayersOut",  enabled = true, speed = 2.7, bezier = "stall" })
+
+-- Workspaces
+hl.animation({ leaf = "workspaces",           enabled = true, speed = 7,   bezier = "menu_decel",      style = "slide" })
+hl.animation({ leaf = "specialWorkspaceIn",   enabled = true, speed = 2.8, bezier = "emphasizedDecel", style = "slidevert" })
+hl.animation({ leaf = "specialWorkspaceOut",  enabled = true, speed = 1.2, bezier = "emphasizedAccel", style = "slidevert" })
+
+-- Zoom (SUPER + plus / SUPER + Minus, further down)
+hl.animation({ leaf = "zoomFactor", enabled = true, speed = 3, bezier = "standardDecel" })
 
 -- Ref https://wiki.hypr.land/Configuring/Basics/Workspace-Rules/
 -- "Smart gaps" / "No gaps when only"
@@ -530,3 +583,25 @@ end
 -- against xkeyboard-config's own pt symbols file rather than assumed.
 hl.bind(mainMod .. " + Minus", function() zoomBy(-0.3) end, { repeating = true, description = "Screen: Zoom out" })
 hl.bind(mainMod .. " + plus",  function() zoomBy(0.3) end,  { repeating = true, description = "Screen: Zoom in" })
+
+
+-------------------------------------
+---- CORES DERIVADAS DO WALLPAPER ----
+-------------------------------------
+-- ISTO TEM DE FICAR NO FIM DO FICHEIRO. O matugen escreve
+-- ~/.config/hypr/hyprland/colors.lua sempre que o wallpaper muda, e esse
+-- ficheiro faz um hl.config() com general.col e misc.background_color. Como o
+-- Hyprland aplica por ordem de execução, carregá-lo aqui é o que faz as cores
+-- geradas SOBREPOREM os placeholders lá em cima. Carregado antes, era o
+-- contrário e não se via diferença nenhuma.
+--
+-- Encontrado a 2026-08-24: o ficheiro estava a ser gerado corretamente desde o
+-- ADR-0010 e **ninguém o lia**. As bordas continuavam no gradiente cyan→verde
+-- de fábrica do Hyprland enquanto o resto do desktop seguia o wallpaper — o
+-- pipeline de tema funcionava e o efeito nunca chegava ao compositor.
+--
+-- O pcall é deliberado: numa instalação nova, ou logo depois de limpar o
+-- estado, o ficheiro ainda não existe. Sem o pcall o require rebenta e leva o
+-- resto da config atrás — perdias os binds todos por causa de um ficheiro de
+-- cores em falta.
+pcall(require, "hyprland.colors")
