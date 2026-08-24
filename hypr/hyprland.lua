@@ -223,6 +223,31 @@ hl.config({
         force_default_wallpaper = -1,    -- Set to 0 or 1 to disable the anime mascot wallpapers
         disable_hyprland_logo   = false, -- If true disables the random hyprland logo / anime girl background. :(
         vrr                     = 2,     -- Variable refresh rate / Adaptive Sync (2 = fullscreen only)
+
+        -- Both added 2026-08-24, both required by the shell's lock screen
+        -- (register phase 7). Upstream end-4 sets both in their own
+        -- hyprland/general.lua; adopting the binds without these two left the
+        -- lock working but looking wrong.
+        --
+        -- session_lock_xray: the shell's lock surface is deliberately
+        -- `color: "transparent"` (modules/common/panels/lock/LockScreen.qml).
+        -- What you are supposed to see behind it is the shell's own wallpaper
+        -- layer, blurred — Background.qml stays `visible` while locked
+        -- specifically for this, and applies a GaussianBlur when
+        -- GlobalStates.screenLocked. Without xray, ext-session-lock-v1 does
+        -- what it says on the tin and the compositor composites nothing under
+        -- the lock surface, so a transparent surface shows nothing. The lock
+        -- still works; it is just blank behind the widgets, which is exactly
+        -- the symptom that turned up on the first real lock test.
+        session_lock_xray = true,
+
+        -- allow_session_lock_restore: if the lock client dies WHILE LOCKED,
+        -- this lets a new one take over the existing lock instead of leaving
+        -- Hyprland's own fallback — which LockScreen.qml's own comment
+        -- describes as "a fallback lock you can't interact with". That is the
+        -- lock-out scenario ADR-0001's gate exists to guard against, so this
+        -- is a safety setting rather than a cosmetic one.
+        allow_session_lock_restore = true,
     },
 })
 
