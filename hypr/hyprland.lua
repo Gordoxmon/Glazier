@@ -519,5 +519,14 @@ local function zoomBy(delta)
     if target < 1.0 then target = 1.0 end
     hl.config({ cursor = { zoom_factor = target } })
 end
+-- Zoom in is `plus`, not upstream's `Equal`, and it is the pt layout again —
+-- the same trap as the cheatsheet's SUPER+Slash. On a US keyboard `=` and `+`
+-- share one unshifted key, so binding Equal gets you both. On pt they are two
+-- different keys: `plus` sits unshifted at AD11 (right of P), while `equal` is
+-- SHIFT+0 at AE10. SUPER+Equal was therefore really SUPER+SHIFT+0 — it worked,
+-- and nobody would ever press it.
+--
+-- Zoom out keeps `Minus`, which is genuinely unshifted on pt (AB10). Checked
+-- against xkeyboard-config's own pt symbols file rather than assumed.
 hl.bind(mainMod .. " + Minus", function() zoomBy(-0.3) end, { repeating = true, description = "Screen: Zoom out" })
-hl.bind(mainMod .. " + Equal", function() zoomBy(0.3) end,  { repeating = true, description = "Screen: Zoom in" })
+hl.bind(mainMod .. " + plus",  function() zoomBy(0.3) end,  { repeating = true, description = "Screen: Zoom in" })
