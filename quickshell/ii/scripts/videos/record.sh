@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
+# LOCAL CHANGE (2026-08-24, ADR-0009). Upstream passed `-t` on every
+# wf-recorder invocation below. That flag does not exist in wf-recorder 0.6.0
+# (confirmed against --help) — the binary printed "invalid option -- 't'" to
+# stderr and kept going with defaults, so recordings worked anyway, but every
+# single recording logged a spurious error. Dropped rather than mapped to a
+# replacement flag: nothing in --help corresponds to whatever -t used to mean,
+# and the default behaviour it fell back to is what got verified working.
+
 CONFIG_FILE="$HOME/.config/illogical-impulse/config.json"
 JSON_PATH=".screenRecord.savePath"
 
@@ -53,9 +61,9 @@ else
     if [[ $FULLSCREEN_FLAG -eq 1 ]]; then
         notify-send "Starting recording" 'recording_'"$(getdate)"'.mp4' -a 'Recorder' & disown
         if [[ $SOUND_FLAG -eq 1 ]]; then
-            wf-recorder -o "$(getactivemonitor)" --pixel-format yuv420p -f './recording_'"$(getdate)"'.mp4' -t --audio="$(getaudiooutput)"
+            wf-recorder -o "$(getactivemonitor)" --pixel-format yuv420p -f './recording_'"$(getdate)"'.mp4' --audio="$(getaudiooutput)"
         else
-            wf-recorder -o "$(getactivemonitor)" --pixel-format yuv420p -f './recording_'"$(getdate)"'.mp4' -t
+            wf-recorder -o "$(getactivemonitor)" --pixel-format yuv420p -f './recording_'"$(getdate)"'.mp4'
         fi
     else
         # If a manual region was provided via --region, use it; otherwise run slurp as before.
@@ -70,9 +78,9 @@ else
 
         notify-send "Starting recording" 'recording_'"$(getdate)"'.mp4' -a 'Recorder' & disown
         if [[ $SOUND_FLAG -eq 1 ]]; then
-            wf-recorder --pixel-format yuv420p -f './recording_'"$(getdate)"'.mp4' -t --geometry "$region" --audio="$(getaudiooutput)"
+            wf-recorder --pixel-format yuv420p -f './recording_'"$(getdate)"'.mp4' --geometry "$region" --audio="$(getaudiooutput)"
         else
-            wf-recorder --pixel-format yuv420p -f './recording_'"$(getdate)"'.mp4' -t --geometry "$region"
+            wf-recorder --pixel-format yuv420p -f './recording_'"$(getdate)"'.mp4' --geometry "$region"
         fi
     fi
 fi
