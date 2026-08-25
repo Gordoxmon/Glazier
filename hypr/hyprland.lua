@@ -23,12 +23,37 @@
 ------------------
 
 -- See https://wiki.hypr.land/Configuring/Basics/Monitors/
-hl.monitor({
-    output   = "DP-2",
-    mode     = "1920x1080@239.76",
-    position = "0x0",
-    scale    = "1",
-})
+--
+-- Per-host: King's desktop monitor and Jester's internal eDP-1 are not the
+-- same, and home/ (this file included) is shared between both
+-- nixosConfigurations. Branching on hostname here — rather than splitting
+-- into separate files pulled in with require() — avoids depending on how
+-- Hyprland's Lua `package.path` is wired for this config directory, which
+-- is unverified and not worth risking against a live, hot-reloaded config.
+local hostname = "unknown"
+do
+    local f = io.open("/etc/hostname", "r")
+    if f then
+        hostname = f:read("*l") or hostname
+        f:close()
+    end
+end
+
+if hostname == "King" then
+    hl.monitor({
+        output   = "DP-2",
+        mode     = "1920x1080@239.76",
+        position = "0x0",
+        scale    = "1",
+    })
+elseif hostname == "Jester" then
+    hl.monitor({
+        output   = "eDP-1",
+        mode     = "preferred",
+        position = "0x0",
+        scale    = "1",
+    })
+end
 
 hl.monitor({
     output   = "",
