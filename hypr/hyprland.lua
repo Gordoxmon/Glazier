@@ -462,6 +462,14 @@ hl.window_rule({
     no_focus = true,
 })
 
+hl.window_rule({
+    -- Keep kitty's transparency without the compositor blurring what's behind it
+    name  = "no-blur-kitty",
+    match = { class = "^kitty$" },
+
+    no_blur = true,
+})
+
 -- Layer rules also return a handle.
 -- local overlayLayerRule = hl.layer_rule({
 --     name  = "no-anim-overlay",
