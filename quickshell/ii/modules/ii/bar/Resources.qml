@@ -28,7 +28,7 @@ MouseArea {
         Resource {
             iconName: "swap_horiz"
             percentage: ResourceUsage.swapUsedPercentage
-            shown: (Config.options.bar.resources.alwaysShowSwap && percentage > 0) || 
+            shown: Config.options.bar.resources.alwaysShowSwap ||
                 (MprisController.activePlayer?.trackTitle == null) ||
                 root.alwaysShowAllResources
             Layout.leftMargin: shown ? 6 : 0
@@ -38,11 +38,19 @@ MouseArea {
         Resource {
             iconName: "planner_review"
             percentage: ResourceUsage.cpuUsage
-            shown: Config.options.bar.resources.alwaysShowCpu || 
+            shown: Config.options.bar.resources.alwaysShowCpu ||
                 !(MprisController.activePlayer?.trackTitle?.length > 0) ||
                 root.alwaysShowAllResources
             Layout.leftMargin: shown ? 6 : 0
             warningThreshold: Config.options.bar.resources.cpuWarningThreshold
+        }
+
+        Resource {
+            iconName: "developer_board"
+            percentage: ResourceUsage.gpuUsage
+            shown: ResourceUsage.gpuAvailable
+            Layout.leftMargin: shown ? 6 : 0
+            warningThreshold: Config.options.bar.resources.gpuWarningThreshold
         }
 
     }

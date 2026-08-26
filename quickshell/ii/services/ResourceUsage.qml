@@ -22,6 +22,15 @@ Singleton {
     property real cpuUsage: 0
     property var previousCpuStats
 
+    property int cpuTemp: -1
+    property bool gpuAvailable: false
+    property string gpuBackend: "none"
+    property real gpuUsage: 0
+    property int gpuTemp: -1
+    property int gpuMemUsed: 0
+    property int gpuMemTotal: 0
+    property string gpuName: ""
+
     property string maxAvailableMemoryString: kbToGbString(ResourceUsage.memoryTotal)
     property string maxAvailableSwapString: kbToGbString(ResourceUsage.swapTotal)
     property string maxAvailableCpuString: "--"
@@ -94,11 +103,39 @@ Singleton {
 
             root.updateHistories()
             interval = Config.options?.resources?.updateInterval ?? 3000
+
+            // Re-trigger the sensors process for this poll cycle
+            sensorsProc.running = false
+            sensorsProc.running = true
         }
 	}
 
 	FileView { id: fileMeminfo; path: "/proc/meminfo" }
     FileView { id: fileStat; path: "/proc/stat" }
+
+    Process {
+        id: sensorsProc
+        command: ["bash", "-c", Quickshell.shellPath("scripts/system/sensors.sh")]
+        running: true
+        stdout: StdioCollector {
+            id: sensorsCollector
+            onStreamFinished: {
+                const fields = sensorsCollector.text.trim().split("|")
+                if (fields.length < 7) return
+
+                const [cpuTempStr, gpuBackendStr, gpuUsageStr, gpuTempStr, gpuMemUsedStr, gpuMemTotalStr, gpuNameStr] = fields
+
+                root.cpuTemp = Number(cpuTempStr)
+                root.gpuBackend = gpuBackendStr
+                root.gpuAvailable = gpuBackendStr !== "none"
+                root.gpuUsage = root.gpuAvailable ? Math.max(0, Number(gpuUsageStr)) / 100 : 0
+                root.gpuTemp = Number(gpuTempStr)
+                root.gpuMemUsed = Math.max(0, Number(gpuMemUsedStr))
+                root.gpuMemTotal = Math.max(0, Number(gpuMemTotalStr))
+                root.gpuName = gpuNameStr !== "none" ? gpuNameStr : ""
+            }
+        }
+    }
 
     Process {
         id: findCpuMaxFreqProc
