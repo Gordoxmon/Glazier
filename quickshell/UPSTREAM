@@ -40,3 +40,14 @@ fetch = |
 # Upstream's install.sh NEVER runs on this machine (ADR-0002). It installs
 # packages with pacman/yay and writes over ~/.config. Here the dependencies
 # come from home/quickshell.nix and delivery is an out-of-store symlink.
+
+# Local divergences from the frozen commit above (per the file header: from
+# here on, changes under ii/ are OURS, not upstream's):
+#
+# - Wi-Fi hotspot quick toggle (2026-08-28): services/Hotspot.qml,
+#   modules/common/models/quickToggles/HotspotToggle.qml,
+#   modules/ii/sidebarRight/quickToggles/*/{Android,}HotspotToggle.qml,
+#   modules/ii/sidebarRight/hotspot/HotspotDialog.qml, plus the "hotspot"
+#   wiring in AbstractQuickPanel/ClassicQuickPanel/AndroidQuickPanel/
+#   AndroidToggleDelegateChooser/SidebarRightContent. A future refetch must
+#   reapply these on top of the new upstream tree.
