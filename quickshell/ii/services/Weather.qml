@@ -2,7 +2,6 @@ pragma Singleton
 pragma ComponentBehavior: Bound
 
 import Quickshell
-import Quickshell.Io
 import QtQuick
 import QtPositioning
 
@@ -46,84 +45,145 @@ Singleton {
         lastRefresh: 0,
     })
 
-    function refineData(data) {
+    property var forecast: []
+
+    function degToCompass(deg) {
+        const dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+        return dirs[Math.round(deg / 22.5) % 16];
+    }
+
+    function formatTime(iso) {
+        const parts = (iso || "").split("T");
+        return parts.length > 1 ? parts[1] : "--:--";
+    }
+
+    function refineData(res, cityLabel) {
+        const c = res?.current || {};
+        const daily = res?.daily || {};
         let temp = {};
-        temp.uv = data?.current?.uvIndex || 0;
-        temp.humidity = (data?.current?.humidity || 0) + "%";
-        temp.sunrise = data?.astronomy?.sunrise || "0.0";
-        temp.sunset = data?.astronomy?.sunset || "0.0";
-        temp.windDir = data?.current?.winddir16Point || "N";
-        temp.wCode = data?.current?.weatherCode || "113";
-        temp.city = data?.location?.areaName[0]?.value || "City";
-        temp.temp = "";
-        temp.tempFeelsLike = "";
+        temp.uv = c.uv_index ?? 0;
+        temp.humidity = (c.relative_humidity_2m ?? 0) + "%";
+        temp.sunrise = formatTime(daily.sunrise?.[0]);
+        temp.sunset = formatTime(daily.sunset?.[0]);
+        temp.windDir = degToCompass(c.wind_direction_10m ?? 0);
+        temp.wCode = c.weather_code ?? 0;
+        temp.city = cityLabel || root.city || "City";
         if (root.useUSCS) {
-            temp.wind = (data?.current?.windspeedMiles || 0) + " mph";
-            temp.precip = (data?.current?.precipInches || 0) + " in";
-            temp.visib = (data?.current?.visibilityMiles || 0) + " m";
-            temp.press = (data?.current?.pressureInches || 0) + " psi";
-            temp.temp += (data?.current?.temp_F || 0);
-            temp.tempFeelsLike += (data?.current?.FeelsLikeF || 0);
-            temp.temp += "°F";
-            temp.tempFeelsLike += "°F";
+            temp.wind = Math.round((c.wind_speed_10m ?? 0) * 0.621371) + " mph";
+            temp.precip = ((c.precipitation ?? 0) / 25.4).toFixed(2) + " in";
+            temp.visib = ((c.visibility ?? 0) / 1609.34).toFixed(1) + " mi";
+            temp.press = ((c.surface_pressure ?? 0) * 0.02953).toFixed(2) + " inHg";
+            temp.temp = Math.round((c.temperature_2m ?? 0) * 9 / 5 + 32) + "°F";
+            temp.tempFeelsLike = Math.round((c.apparent_temperature ?? 0) * 9 / 5 + 32) + "°F";
         } else {
-            temp.wind = (data?.current?.windspeedKmph || 0) + " km/h";
-            temp.precip = (data?.current?.precipMM || 0) + " mm";
-            temp.visib = (data?.current?.visibility || 0) + " km";
-            temp.press = (data?.current?.pressure || 0) + " hPa";
-            temp.temp += (data?.current?.temp_C || 0);
-            temp.tempFeelsLike += (data?.current?.FeelsLikeC || 0);
-            temp.temp += "°C";
-            temp.tempFeelsLike += "°C";
+            temp.wind = Math.round(c.wind_speed_10m ?? 0) + " km/h";
+            temp.precip = (c.precipitation ?? 0) + " mm";
+            temp.visib = ((c.visibility ?? 0) / 1000).toFixed(1) + " km";
+            temp.press = Math.round(c.surface_pressure ?? 0) + " hPa";
+            temp.temp = Math.round(c.temperature_2m ?? 0) + "°C";
+            temp.tempFeelsLike = Math.round(c.apparent_temperature ?? 0) + "°C";
         }
         temp.lastRefresh = DateTime.time + " • " + DateTime.date;
         root.data = temp;
+
+        const days = daily.time || [];
+        root.forecast = days.slice(0, 5).map((day, i) => {
+            const hi = daily.temperature_2m_max?.[i] ?? 0;
+            const lo = daily.temperature_2m_min?.[i] ?? 0;
+            return {
+                day: day,
+                wCode: daily.weather_code?.[i] ?? 0,
+                high: root.useUSCS ? Math.round(hi * 9 / 5 + 32) + "°F" : Math.round(hi) + "°C",
+                low: root.useUSCS ? Math.round(lo * 9 / 5 + 32) + "°F" : Math.round(lo) + "°C",
+            };
+        });
+    }
+
+    function fetchForecast(lat, lon, cityLabel) {
+        const params = "current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m,uv_index,visibility&daily=sunrise,sunset,temperature_2m_max,temperature_2m_min,weather_code&timezone=auto";
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&${params}`;
+        const xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState !== XMLHttpRequest.DONE)
+                return;
+            if (xhr.status !== 200) {
+                console.error(`[WeatherService] Forecast request failed with status ${xhr.status}`);
+                return;
+            }
+            try {
+                root.refineData(JSON.parse(xhr.responseText), cityLabel);
+            } catch (e) {
+                console.error(`[WeatherService] ${e.message}`);
+            }
+        };
+        xhr.open("GET", url);
+        xhr.send();
+    }
+
+    function reverseGeocode(lat, lon) {
+        const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=jsonv2&zoom=14`;
+        const xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState !== XMLHttpRequest.DONE)
+                return;
+            let cityLabel = root.city || "Current location";
+            if (xhr.status === 200) {
+                try {
+                    const address = JSON.parse(xhr.responseText)?.address || {};
+                    cityLabel = address.village || address.town || address.city || address.suburb || cityLabel;
+                } catch (e) {
+                    console.error(`[WeatherService] ${e.message}`);
+                }
+            }
+            root.fetchForecast(lat, lon, cityLabel);
+        };
+        xhr.open("GET", url);
+        xhr.setRequestHeader("User-Agent", "quickshell-weather-widget");
+        xhr.send();
+    }
+
+    function geocodeCity(cityName) {
+        // Open-Meteo's geocoder matches a bare locality name, not a
+        // comma-qualified "Parish, Municipality" string (e.g. the first
+        // result for "Arcozelo" alone is the right Vila Nova de Gaia parish;
+        // the full string returns no match at all).
+        const query = (cityName || "").split(",")[0].trim();
+        const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=pt&format=json`;
+        const xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState !== XMLHttpRequest.DONE)
+                return;
+            if (xhr.status !== 200) {
+                console.error(`[WeatherService] Geocoding request failed with status ${xhr.status}`);
+                return;
+            }
+            try {
+                const hit = JSON.parse(xhr.responseText)?.results?.[0];
+                if (!hit) {
+                    console.error(`[WeatherService] No geocoding match for "${cityName}"`);
+                    return;
+                }
+                root.fetchForecast(hit.latitude, hit.longitude, hit.name);
+            } catch (e) {
+                console.error(`[WeatherService] ${e.message}`);
+            }
+        };
+        xhr.open("GET", url);
+        xhr.send();
     }
 
     function getData() {
-        let command = "curl -s wttr.in";
-
         if (root.gpsActive && root.location.valid) {
-            command += `/${root.location.lat},${root.location.long}`;
+            root.reverseGeocode(root.location.lat, root.location.long);
         } else {
-            command += `/${formatCityName(root.city)}`;
+            root.geocodeCity(root.city);
         }
-
-        // format as json
-        command += "?format=j1";
-        command += " | ";
-        // only take the current weather, location, asytronmy data
-        command += "jq '{current: .current_condition[0], location: .nearest_area[0], astronomy: .weather[0].astronomy[0]}'";
-        fetcher.command[2] = command;
-        fetcher.running = true;
-    }
-
-    function formatCityName(cityName) {
-        return cityName.trim().split(/\s+/).join('+');
     }
 
     Component.onCompleted: {
         if (!root.gpsActive) return;
         console.info("[WeatherService] Starting the GPS service.");
         positionSource.start();
-    }
-
-    Process {
-        id: fetcher
-        command: ["bash", "-c", ""]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                if (text.length === 0)
-                    return;
-                try {
-                    const parsedData = JSON.parse(text);
-                    root.refineData(parsedData);
-                    // console.info(`[ data: ${JSON.stringify(parsedData)}`);
-                } catch (e) {
-                    console.error(`[WeatherService] ${e.message}`);
-                }
-            }
-        }
     }
 
     PositionSource {

@@ -51,3 +51,12 @@ fetch = |
 #   wiring in AbstractQuickPanel/ClassicQuickPanel/AndroidQuickPanel/
 #   AndroidToggleDelegateChooser/SidebarRightContent. A future refetch must
 #   reapply these on top of the new upstream tree.
+#
+# - Weather backend swap, wttr.in -> Open-Meteo (2026-09-01): services/Weather.qml
+#   rewritten to call the Open-Meteo geocoding + forecast APIs (and Nominatim
+#   for GPS reverse-geocoding) via XMLHttpRequest instead of shelling out to
+#   curl|jq against wttr.in. wttr.in's free-text city lookup was resolving
+#   Portuguese civil parishes to the wrong municipality inconsistently
+#   depending on the requesting IP. modules/common/Icons.qml's
+#   weatherIconMap was re-keyed from wttr.in's proprietary numeric codes to
+#   standard WMO weather codes to match. A future refetch must reapply both.
