@@ -502,6 +502,38 @@ Singleton {
                     property bool enable: false
                     property int delay: 300 // Delay before sending request. Reduces (potential) rate limits and lag.
                 }
+                property JsonObject widgets: JsonObject {
+                    property bool enable: true
+                    property JsonObject media: JsonObject {
+                        property bool enable: true
+                    }
+                    property JsonObject weather: JsonObject {
+                        property bool enable: true
+                        property bool forecast: true
+                    }
+                    property JsonObject news: JsonObject {
+                        property bool enable: true
+                        // daily.dev has no RSS for the personal feed; only for shared bookmarks.
+                        // Bookmarks -> Share Bookmarks -> public, then paste the link here:
+                        // { "url": "https://api.daily.dev/rss/b/<token>", "name": "daily.dev", "icon": "bookmark" },
+                        property list<var> feeds: [
+                            { "url": "https://feeds.bbci.co.uk/news/world/rss.xml", "name": "BBC World", "icon": "public" },
+                            { "url": "https://www.publico.pt/rss", "name": "Público", "icon": "newspaper" },
+                            { "url": "https://dev.to/feed", "name": "DEV", "icon": "code" },
+                            { "url": "https://hnrss.org/frontpage", "name": "Hacker News", "icon": "forum" },
+                            { "url": "https://lobste.rs/rss", "name": "Lobsters", "icon": "terminal" },
+                            { "url": "https://www.pcgamer.com/rss/", "name": "PC Gamer", "icon": "sports_esports" },
+                            { "url": "https://www.rockpapershotgun.com/feed", "name": "Rock Paper Shotgun", "icon": "sports_esports" },
+                            { "url": "https://kotaku.com/rss", "name": "Kotaku", "icon": "sports_esports" },
+                            { "url": "https://www.eurogamer.pt/feed", "name": "Eurogamer PT", "icon": "sports_esports" }
+                        ]
+                        property int fetchInterval: 30 // minutes
+                        property int maxItemsPerFeed: 5
+                    }
+                    property JsonObject resources: JsonObject {
+                        property bool enable: true
+                    }
+                }
                 property JsonObject ai: JsonObject {
                     property bool textFadeIn: false
                 }

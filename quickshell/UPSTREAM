@@ -60,3 +60,17 @@ fetch = |
 #   depending on the requesting IP. modules/common/Icons.qml's
 #   weatherIconMap was re-keyed from wttr.in's proprietary numeric codes to
 #   standard WMO weather codes to match. A future refetch must reapply both.
+#
+# - Left sidebar widget panel (2026-09-01): new "Widgets" tab, first in the
+#   left sidebar's tab bar, holding glanceable media/weather/news/resources
+#   cards. New files, all ours, unaffected by a refetch:
+#   services/News.qml (new RSS/Atom polling singleton) and
+#   modules/ii/sidebarLeft/widgets/{WidgetCard,WidgetsPage,MediaWidget,
+#   WeatherWidget,NewsWidget,ResourcesWidget}.qml. Three upstream files were
+#   edited and MUST be reapplied by hand on refetch:
+#   modules/ii/sidebarLeft/SidebarLeftContent.qml (new "Widgets" tab entry,
+#   gated on Config.options.sidebar.widgets.enable, prepended to
+#   tabButtonList/contentChildren), modules/common/Config.qml (new
+#   sidebar.widgets.{media,weather,news,resources} JsonObject block) and
+#   services/Weather.qml (daily forecast fields: Weather.forecast, plus
+#   temperature_2m_max/min/weather_code added to the existing daily= param).
