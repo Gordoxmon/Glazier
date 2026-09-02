@@ -110,5 +110,77 @@ Item {
                 }
             }
         }
+
+        // Custom durations (minutes), only editable while paused
+        RowLayout {
+            Layout.topMargin: 8
+            Layout.alignment: Qt.AlignHCenter
+            spacing: 10
+            enabled: !TimerService.pomodoroRunning
+
+            ColumnLayout {
+                spacing: 0
+                StyledText {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: Translation.tr("Focus")
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    color: Appearance.colors.colSubtext
+                }
+                StyledSpinBox {
+                    baseHeight: 28
+                    value: Math.round(TimerService.focusTime / 60)
+                    from: 1
+                    to: 180
+                    stepSize: 1
+                    onValueChanged: {
+                        Config.options.time.pomodoro.focus = value * 60;
+                        if (!TimerService.pomodoroRunning)
+                            TimerService.pomodoroSecondsLeft = TimerService.pomodoroLapDuration;
+                    }
+                }
+            }
+            ColumnLayout {
+                spacing: 0
+                StyledText {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: Translation.tr("Break")
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    color: Appearance.colors.colSubtext
+                }
+                StyledSpinBox {
+                    baseHeight: 28
+                    value: Math.round(TimerService.breakTime / 60)
+                    from: 1
+                    to: 180
+                    stepSize: 1
+                    onValueChanged: {
+                        Config.options.time.pomodoro.breakTime = value * 60;
+                        if (!TimerService.pomodoroRunning)
+                            TimerService.pomodoroSecondsLeft = TimerService.pomodoroLapDuration;
+                    }
+                }
+            }
+            ColumnLayout {
+                spacing: 0
+                StyledText {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: Translation.tr("Long break")
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    color: Appearance.colors.colSubtext
+                }
+                StyledSpinBox {
+                    baseHeight: 28
+                    value: Math.round(TimerService.longBreakTime / 60)
+                    from: 1
+                    to: 180
+                    stepSize: 1
+                    onValueChanged: {
+                        Config.options.time.pomodoro.longBreak = value * 60;
+                        if (!TimerService.pomodoroRunning)
+                            TimerService.pomodoroSecondsLeft = TimerService.pomodoroLapDuration;
+                    }
+                }
+            }
+        }
     }
 }

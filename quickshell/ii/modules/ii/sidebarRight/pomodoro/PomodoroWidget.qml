@@ -65,6 +65,7 @@ Item {
             Layout.fillHeight: true
             spacing: 10
             clip: true
+            interactive: false
             currentIndex: tabBar.currentIndex
 
             // Tabs
