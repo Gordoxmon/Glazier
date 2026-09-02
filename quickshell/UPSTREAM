@@ -74,3 +74,11 @@ fetch = |
 #   sidebar.widgets.{media,weather,news,resources} JsonObject block) and
 #   services/Weather.qml (daily forecast fields: Weather.forecast, plus
 #   temperature_2m_max/min/weather_code added to the existing daily= param).
+#
+# - Native Hyprland wallpaper sync (2026-09-02): scripts/colors/switchwall.sh's
+#   switch(), static-image branch, gained three `hyprctl hyprpaper` calls
+#   (preload/wallpaper/unload unused) right after set_wallpaper_path, so
+#   Hyprland's own hyprpaper layer (home/desktop.nix) tracks whatever image
+#   quickshell sets. Reopens ADR-0010's "quickshell owns wallpaper" stance on
+#   request. A future refetch must reapply this block; the video branch
+#   (mpvpaper) is untouched.

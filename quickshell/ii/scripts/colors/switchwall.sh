@@ -256,6 +256,12 @@ switch() {
             # Update wallpaper path in config
             set_wallpaper_path "$imgpath"
             remove_restore
+
+            # Native Hyprland layer, so Hyprland itself has the wallpaper too,
+            # not just quickshell's Background.qml on top of it.
+            hyprctl hyprpaper preload "$imgpath" 2>/dev/null
+            hyprctl hyprpaper wallpaper ",$imgpath" 2>/dev/null
+            hyprctl hyprpaper unload unused 2>/dev/null
         fi
     fi
 
