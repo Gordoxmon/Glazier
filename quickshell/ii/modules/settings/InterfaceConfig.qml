@@ -5,7 +5,23 @@ import qs.modules.common
 import qs.modules.common.widgets
 
 ContentPage {
+    id: root
     forceWidth: true
+
+    readonly property var widgetIcons: ({
+        media: "music_note", weather: "cloud", news: "newspaper", resources: "monitor_heart"
+    })
+    readonly property var widgetNames: ({
+        media: Translation.tr("Media"), weather: Translation.tr("Weather"),
+        news: Translation.tr("News"), resources: Translation.tr("Resources")
+    })
+    function moveWidget(index, offset) {
+        const order = [...Config.options.sidebar.widgets.order];
+        const target = index + offset;
+        if (target < 0 || target >= order.length) return;
+        [order[index], order[target]] = [order[target], order[index]];
+        Config.options.sidebar.widgets.order = order;
+    }
 
     ContentSection {
         icon: "keyboard"
@@ -686,6 +702,87 @@ ContentPage {
                     onValueChanged: {
                         Config.options.sidebar.cornerOpen.cornerRegionHeight = value;
                     }
+                }
+            }
+        }
+
+        ContentSubsection {
+            title: Translation.tr("Widgets")
+            tooltip: Translation.tr("Enable and reorder the left sidebar's widgets.\nEdit the feed list itself in the config file")
+
+            Repeater {
+                model: Config.options.sidebar.widgets.order
+                delegate: ConfigRow {
+                    required property string modelData
+                    required property int index
+                    Layout.fillWidth: true
+
+                    ConfigSwitch {
+                        Layout.fillWidth: true
+                        buttonIcon: root.widgetIcons[modelData]
+                        text: root.widgetNames[modelData]
+                        checked: Config.options.sidebar.widgets[modelData]?.enable ?? false
+                        onCheckedChanged: {
+                            Config.options.sidebar.widgets[modelData].enable = checked;
+                        }
+                    }
+                    RippleButton {
+                        implicitWidth: 28
+                        implicitHeight: 28
+                        enabled: index > 0
+                        buttonRadius: Appearance.rounding.full
+                        contentItem: MaterialSymbol {
+                            text: "arrow_upward"
+                            iconSize: Appearance.font.pixelSize.normal
+                            horizontalAlignment: Text.AlignHCenter
+                            color: Appearance.colors.colOnLayer2
+                        }
+                        onClicked: root.moveWidget(index, -1)
+                    }
+                    RippleButton {
+                        implicitWidth: 28
+                        implicitHeight: 28
+                        enabled: index < Config.options.sidebar.widgets.order.length - 1
+                        buttonRadius: Appearance.rounding.full
+                        contentItem: MaterialSymbol {
+                            text: "arrow_downward"
+                            iconSize: Appearance.font.pixelSize.normal
+                            horizontalAlignment: Text.AlignHCenter
+                            color: Appearance.colors.colOnLayer2
+                        }
+                        onClicked: root.moveWidget(index, 1)
+                    }
+                }
+            }
+
+            ConfigSpinBox {
+                icon: "schedule"
+                text: Translation.tr("News refresh interval (minutes)")
+                value: Config.options.sidebar.widgets.news.fetchInterval
+                from: 5
+                to: 180
+                stepSize: 5
+                onValueChanged: {
+                    Config.options.sidebar.widgets.news.fetchInterval = value;
+                }
+            }
+            ConfigSpinBox {
+                icon: "format_list_numbered"
+                text: Translation.tr("News headlines per source")
+                value: Config.options.sidebar.widgets.news.maxItemsPerFeed
+                from: 1
+                to: 20
+                stepSize: 1
+                onValueChanged: {
+                    Config.options.sidebar.widgets.news.maxItemsPerFeed = value;
+                }
+            }
+            ConfigSwitch {
+                buttonIcon: "cloud"
+                text: Translation.tr("Weather: show forecast")
+                checked: Config.options.sidebar.widgets.weather.forecast
+                onCheckedChanged: {
+                    Config.options.sidebar.widgets.weather.forecast = checked;
                 }
             }
         }

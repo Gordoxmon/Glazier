@@ -7,6 +7,17 @@ Item {
     id: root
     property real padding: 4
 
+    Component { id: mediaComponent; MediaWidget {} }
+    Component { id: weatherComponent; WeatherWidget {} }
+    Component { id: newsComponent; NewsWidget {} }
+    Component { id: resourcesComponent; ResourcesWidget {} }
+    readonly property var widgetComponents: ({
+        media: mediaComponent,
+        weather: weatherComponent,
+        news: newsComponent,
+        resources: resourcesComponent
+    })
+
     StyledFlickable {
         anchors {
             fill: parent
@@ -19,29 +30,15 @@ Item {
             anchors.fill: parent
             spacing: 10
 
-            Loader {
-                Layout.fillWidth: true
-                active: Config.options.sidebar.widgets.media.enable
-                visible: active
-                sourceComponent: MediaWidget {}
-            }
-            Loader {
-                Layout.fillWidth: true
-                active: Config.options.sidebar.widgets.weather.enable
-                visible: active
-                sourceComponent: WeatherWidget {}
-            }
-            Loader {
-                Layout.fillWidth: true
-                active: Config.options.sidebar.widgets.news.enable
-                visible: active
-                sourceComponent: NewsWidget {}
-            }
-            Loader {
-                Layout.fillWidth: true
-                active: Config.options.sidebar.widgets.resources.enable
-                visible: active
-                sourceComponent: ResourcesWidget {}
+            Repeater {
+                model: Config.options.sidebar.widgets.order
+                delegate: Loader {
+                    required property string modelData
+                    Layout.fillWidth: true
+                    active: Config.options.sidebar.widgets[modelData]?.enable ?? false
+                    visible: active
+                    sourceComponent: root.widgetComponents[modelData]
+                }
             }
         }
     }

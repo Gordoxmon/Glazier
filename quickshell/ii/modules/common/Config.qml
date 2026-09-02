@@ -504,6 +504,7 @@ Singleton {
                 }
                 property JsonObject widgets: JsonObject {
                     property bool enable: true
+                    property list<string> order: ["media", "weather", "news", "resources"]
                     property JsonObject media: JsonObject {
                         property bool enable: true
                     }
