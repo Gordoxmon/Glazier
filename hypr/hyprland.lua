@@ -53,6 +53,17 @@ elseif hostname == "Jester" then
         position = "0x0",
         scale    = "1",
     })
+    -- External monitor over USB-C/DP. Declared explicitly because without it,
+    -- this fell through the output="" catch-all below, which guesses
+    -- scale="auto" — on this 1920x1200 panel that guessed 1.5, giving a
+    -- 1280x800 logical desktop. Found by checking `hyprctl monitors`, not by
+    -- a bug report.
+    hl.monitor({
+        output   = "DP-2",
+        mode     = "1920x1200@60.01",
+        position = "1920x0",
+        scale    = "1",
+    })
 end
 
 hl.monitor({
@@ -61,6 +72,19 @@ hl.monitor({
     position = "auto",
     scale    = "auto",
 })
+
+-- Live-experimentation override. wdisplays (SUPER+SHIFT+D) applies layout
+-- changes instantly via wlr-output-management but persists nothing;
+-- hypr-monitors-save snapshots `hyprctl monitors` into this file. Delete it
+-- to fall back to the declarative blocks above.
+--
+-- dofile, not require: require caches in package.loaded, so a second
+-- `hyprctl reload` in the same Lua state would silently reuse a stale
+-- layout. dofile always re-reads. Placed after the catch-all so a saved
+-- layout's hl.monitor calls win over the declarative ones for the same
+-- output.
+local cfgHome = os.getenv("XDG_CONFIG_HOME") or (os.getenv("HOME") .. "/.config")
+pcall(dofile, cfgHome .. "/hypr/hyprland/monitors.lua")
 
 
 ---------------------
@@ -379,14 +403,12 @@ local closeWindowBind = hl.bind(mainMod .. " + Q", hl.dsp.window.close(), { desc
 hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"), { description = "Session: Exit Hyprland" })
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager), { description = "App: File manager" })
 hl.bind(mainMod .. " + Space", hl.dsp.window.float({ action = "toggle" }), { description = "Window: Toggle floating" })
+hl.bind(mainMod .. " + SHIFT + D", hl.dsp.exec_cmd("wdisplays"), { description = "App: Monitor layout (wdisplays)" })
 -- Repointed from `menu` (rofi) to the shell's launcher: rofi is not installed on
 -- this machine, so this bind did nothing. See the SHELL section at the end.
 hl.bind(mainMod .. " + Super_L", hl.dsp.global("quickshell:searchToggleRelease"), { description = "Shell: Toggle search" })
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo(), { description = "Window: Toggle pseudotile" })
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"), { description = "Window: Toggle split direction" }) -- dwindle only
-
--- Send the focused window to the other monitor
-hl.bind(mainMod .. " + Alt_L", hl.dsp.window.move({ monitor = "+1" }), { description = "Window: Send to other monitor" })
 
 -- Move focus with mainMod + arrow keys
 hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "left" }),  { description = "Window: Focus left" })
