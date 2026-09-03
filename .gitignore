@@ -1,0 +1,4 @@
+# Bytecode cache. The vendored end-4 scripts under quickshell/ are invoked
+# directly (python -E "$0"), and running any of them by hand for testing
+# leaves one of these next to it.
+__pycache__/

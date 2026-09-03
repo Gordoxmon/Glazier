@@ -24,67 +24,17 @@
 
 -- See https://wiki.hypr.land/Configuring/Basics/Monitors/
 --
--- Per-host: King's desktop monitor and Jester's internal eDP-1 are not the
--- same, and home/ (this file included) is shared between both
--- nixosConfigurations. Branching on hostname here — rather than splitting
--- into separate files pulled in with require() — avoids depending on how
--- Hyprland's Lua `package.path` is wired for this config directory, which
--- is unverified and not worth risking against a live, hot-reloaded config.
-local hostname = "unknown"
-do
-    local f = io.open("/etc/hostname", "r")
-    if f then
-        hostname = f:read("*l") or hostname
-        f:close()
-    end
-end
-
-if hostname == "King" then
-    hl.monitor({
-        output   = "DP-2",
-        mode     = "1920x1080@239.76",
-        position = "0x0",
-        scale    = "1",
-    })
-elseif hostname == "Jester" then
-    hl.monitor({
-        output   = "eDP-1",
-        mode     = "preferred",
-        position = "0x0",
-        scale    = "1",
-    })
-    -- External monitor over USB-C/DP. Declared explicitly because without it,
-    -- this fell through the output="" catch-all below, which guesses
-    -- scale="auto" — on this 1920x1200 panel that guessed 1.5, giving a
-    -- 1280x800 logical desktop. Found by checking `hyprctl monitors`, not by
-    -- a bug report.
-    hl.monitor({
-        output   = "DP-2",
-        mode     = "1920x1200@60.01",
-        position = "1920x0",
-        scale    = "1",
-    })
-end
-
+-- No per-host config here: this file is machine-agnostic, shared by every
+-- host. Actual hardware (outputs, modes, keyboard layout) lives in
+-- ~/.config/hypr/local.lua, loaded in the LOCAL OVERRIDES block at the end of
+-- this file. Before that loads, this catch-all treats any monitor generically
+-- via its EDID-preferred mode.
 hl.monitor({
     output   = "",
     mode     = "preferred",
     position = "auto",
     scale    = "auto",
 })
-
--- Live-experimentation override. wdisplays (SUPER+SHIFT+D) applies layout
--- changes instantly via wlr-output-management but persists nothing;
--- hypr-monitors-save snapshots `hyprctl monitors` into this file. Delete it
--- to fall back to the declarative blocks above.
---
--- dofile, not require: require caches in package.loaded, so a second
--- `hyprctl reload` in the same Lua state would silently reuse a stale
--- layout. dofile always re-reads. Placed after the catch-all so a saved
--- layout's hl.monitor calls win over the declarative ones for the same
--- output.
-local cfgHome = os.getenv("XDG_CONFIG_HOME") or (os.getenv("HOME") .. "/.config")
-pcall(dofile, cfgHome .. "/hypr/hyprland/monitors.lua")
 
 
 ---------------------
@@ -360,7 +310,7 @@ hl.config({
 
 hl.config({
     input = {
-        kb_layout  = "pt",
+        kb_layout  = "us",
         kb_variant = "",
         kb_model   = "",
         kb_options = "",
@@ -400,7 +350,7 @@ local mainMod = "SUPER" -- Sets "Windows" key as main modifier
 hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd(terminal), { description = "App: Terminal" })
 local closeWindowBind = hl.bind(mainMod .. " + Q", hl.dsp.window.close(), { description = "Window: Close" })
 -- closeWindowBind:set_enabled(false)
-hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"), { description = "Session: Exit Hyprland" })
+hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("hyprctl dispatch exit"), { description = "Session: Exit Hyprland" })
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager), { description = "App: File manager" })
 hl.bind(mainMod .. " + Space", hl.dsp.window.float({ action = "toggle" }), { description = "Window: Toggle floating" })
 hl.bind(mainMod .. " + SHIFT + D", hl.dsp.exec_cmd("wdisplays"), { description = "App: Monitor layout (wdisplays)" })
@@ -640,15 +590,36 @@ hl.bind(mainMod .. " + Minus", function() zoomBy(-0.3) end, { repeating = true, 
 hl.bind(mainMod .. " + plus",  function() zoomBy(0.3) end,  { repeating = true, description = "Screen: Zoom in" })
 
 
--------------------------------------
----- CORES DERIVADAS DO WALLPAPER ----
--------------------------------------
--- ISTO TEM DE FICAR NO FIM DO FICHEIRO. O matugen escreve
--- ~/.config/hypr/hyprland/colors.lua sempre que o wallpaper muda, e esse
--- ficheiro faz um hl.config() com general.col e misc.background_color. Como o
--- Hyprland aplica por ordem de execução, carregá-lo aqui é o que faz as cores
--- geradas SOBREPOREM os placeholders lá em cima. Carregado antes, era o
--- contrário e não se via diferença nenhuma.
+-------------------------
+---- LOCAL OVERRIDES ----
+-------------------------
+-- Carregado por último de propósito: o Hyprland aplica a config por ordem de
+-- execução, portanto isto ganha sobre os blocos declarativos acima.
+-- Ordenado do menos para o mais autoritário. Os três são opcionais.
+local cfgHome = os.getenv("XDG_CONFIG_HOME") or (os.getenv("HOME") .. "/.config")
+
+-- 1. hypr/local.lua — a máquina. Monitores, layout de teclado, o que este
+--    ficheiro não deve presumir sobre o teu hardware. Nada automático lhe toca.
+pcall(dofile, cfgHome .. "/hypr/local.lua")
+
+-- 2. hypr/hyprland/monitors.lua — ESCRITO PELA MÁQUINA. wdisplays
+--    (SUPER+SHIFT+D) aplica layouts a quente via wlr-output-management mas
+--    não persiste nada; hypr-monitors-save fotografa o `hyprctl monitors`
+--    para aqui. Apaga-o para voltar aos blocos declarativos acima. Ganha
+--    sobre o local.lua para que arrastar um monitor numa GUI seja a última
+--    palavra.
+--
+--    dofile, não require: o require faz cache em package.loaded, portanto um
+--    segundo `hyprctl reload` no mesmo estado Lua reutilizaria em silêncio um
+--    layout velho. O dofile relê sempre.
+pcall(dofile, cfgHome .. "/hypr/hyprland/monitors.lua")
+
+-- 3. hyprland/colors.lua — escrito pelo matugen a cada mudança de wallpaper,
+--    faz um hl.config() com general.col e misc.background_color. TEM de
+--    ficar em último: como o Hyprland aplica por ordem de execução,
+--    carregá-lo aqui é o que faz as cores geradas SOBREPOREM os placeholders
+--    lá em cima. Carregado antes, era o contrário e não se via diferença
+--    nenhuma.
 --
 -- Encontrado a 2026-08-24: o ficheiro estava a ser gerado corretamente desde o
 -- ADR-0010 e **ninguém o lia**. As bordas continuavam no gradiente cyan→verde
