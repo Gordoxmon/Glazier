@@ -2,7 +2,7 @@
 
 // https://github.com/farzher/fuzzysort
 // License: MIT | Copyright (c) 2018 Stephen Kamenar
-// A copy of the license is available in the `licenses` folder of this repository
+// A copy of the license is available at licenses/MIT-fuzzysort.txt in this repository
 
 var single =  (search, target) => {
     if(!search || !target) return NULL

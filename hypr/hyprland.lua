@@ -103,7 +103,7 @@ hl.env("HYPRCURSOR_SIZE", "24")
 -- the shell above it was end-4. That mismatch is what this closes.
 --
 -- Source: dots/.config/hypr/hyprland/general.lua at the pinned commit in
--- home/quickshell/UPSTREAM. Kept verbatim where it is taste (gaps, rounding,
+-- quickshell/UPSTREAM. Kept verbatim where it is taste (gaps, rounding,
 -- blur, the whole animation set) and dropped where it is theirs and not ours —
 -- their kb_layout is "us", their monitors, their NVIDIA assumptions.
 hl.config({
@@ -492,7 +492,8 @@ hl.window_rule({
 --   media/bar   CTRL variants — SUPER+M and SUPER+J were already taken here.
 --   pin         SUPER+ALT+P — SUPER+P is pseudotile in this config.
 --   sleep       NOT BOUND. TM-0001 rules out suspend on this machine, and
---               home/desktop.nix carries the same decision for hypridle.
+--               the consuming NixOS config's desktop.nix carries the same
+--               decision for hypridle.
 --   browser,    NOT BOUND. Nothing suitable is installed, and a bind pointing
 --   editors,    at a missing binary is a bind that silently does nothing —
 --   office,     the exact trap SUPER+Super_L was already in with rofi.
@@ -530,7 +531,8 @@ hl.bind(mainMod .. " + SHIFT + R",       hl.dsp.global("quickshell:regionRecord"
 hl.bind(mainMod .. " + SHIFT + ALT + R", hl.dsp.global("quickshell:regionRecordWithSound"), { description = "Utilities: Record region with sound" })
 
 -- Whole-screen capture. hyprshot rather than the shell, because it is already
--- installed session-wide (home/desktop.nix) and wraps grim + slurp for us.
+-- installed session-wide (the consuming NixOS config's desktop.nix) and wraps
+-- grim + slurp for us.
 hl.bind("Print",        hl.dsp.exec_cmd("hyprshot -m output --clipboard-only"), { description = "Utilities: Screenshot to clipboard" })
 hl.bind("CTRL + Print", hl.dsp.exec_cmd("hyprshot -m output"),                  { description = "Utilities: Screenshot to file" })
 hl.bind(mainMod .. " + SHIFT + C", hl.dsp.exec_cmd("hyprpicker -a"),            { description = "Utilities: Pick colour to clipboard" })
@@ -560,7 +562,8 @@ hl.bind(mainMod .. " + SHIFT + ALT + Q", hl.dsp.exec_cmd("hyprctl kill"),  { des
 
 -- Media on the letter keys, for keyboards without the XF86 block. The XF86
 -- binds further up were dead until 2026-08-24: they call playerctl and
--- brightnessctl, and neither was installed. Both are now in home/desktop.nix.
+-- brightnessctl, and neither was installed. Both are now in the consuming
+-- NixOS config's desktop.nix.
 hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("playerctl next"),                        { locked = true, description = "Media: Next track" })
 hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd("playerctl previous"),                    { locked = true, description = "Media: Previous track" })
 hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd("playerctl play-pause"),                  { locked = true, description = "Media: Play/pause" })

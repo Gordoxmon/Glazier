@@ -14,8 +14,8 @@ upstream_url      = https://github.com/end-4/dots-hyprland
 upstream_commit   = 42d0aae17b744a38cd05c9044c189bfc9b13869a
 upstream_date     = 2026-08-15T11:34:42+08:00
 vendored_on       = 2026-08-23
-vendored_subtrees = dots/.config/quickshell/ii -> home/quickshell/ii
-                    dots/.config/matugen       -> home/quickshell/matugen
+vendored_subtrees = dots/.config/quickshell/ii -> quickshell/ii
+                    dots/.config/matugen       -> quickshell/matugen
 
 # The submodule is the number one silent failure of this adoption: a tarball or
 # a `cp -r` without it leaves an empty directory, and the shell will not load
@@ -29,17 +29,20 @@ submodule_commit  = e31ec4cb4ebf6a46b267f5c42eabf6874916fa16
 # The exact refetch command. --recurse-submodules and `cp -a` are not detail:
 # -a preserves the 4 relative symlinks under ii/assets/icons/ and the 31
 # executable bits on the scripts. `cp -r` copies symlink targets and drops +x.
+# DEST is this repo's root — run from anywhere inside a Glazier checkout.
 fetch = |
+  DEST=$(git rev-parse --show-toplevel)
   git clone --recurse-submodules https://github.com/end-4/dots-hyprland /tmp/ii-src
   git -C /tmp/ii-src checkout 42d0aae17b744a38cd05c9044c189bfc9b13869a
   git -C /tmp/ii-src submodule update --init --recursive
-  cp -a /tmp/ii-src/dots/.config/quickshell/ii      ~/nixos/home/quickshell/ii
-  cp -a /tmp/ii-src/dots/.config/matugen            ~/nixos/home/quickshell/matugen
-  find ~/nixos/home/quickshell -name '.git*' -not -name '.gitattributes' -exec rm -rf {} +
+  cp -a /tmp/ii-src/dots/.config/quickshell/ii      "$DEST/quickshell/ii"
+  cp -a /tmp/ii-src/dots/.config/matugen            "$DEST/quickshell/matugen"
+  find "$DEST/quickshell" -name '.git*' -not -name '.gitattributes' -exec rm -rf {} +
 
-# Upstream's install.sh NEVER runs on this machine (ADR-0002). It installs
-# packages with pacman/yay and writes over ~/.config. Here the dependencies
-# come from home/quickshell.nix and delivery is an out-of-store symlink.
+# Upstream's install.sh NEVER runs on the consuming NixOS machine (ADR-0002).
+# It installs packages with pacman/yay and writes over ~/.config. There, the
+# dependencies come from the consuming config's quickshell.nix and delivery is
+# an out-of-store symlink into this repo.
 
 # Local divergences from the frozen commit above (per the file header: from
 # here on, changes under ii/ are OURS, not upstream's):
@@ -78,7 +81,7 @@ fetch = |
 # - Native Hyprland wallpaper sync (2026-09-02): scripts/colors/switchwall.sh's
 #   switch(), static-image branch, gained three `hyprctl hyprpaper` calls
 #   (preload/wallpaper/unload unused) right after set_wallpaper_path, so
-#   Hyprland's own hyprpaper layer (home/desktop.nix) tracks whatever image
-#   quickshell sets. Reopens ADR-0010's "quickshell owns wallpaper" stance on
-#   request. A future refetch must reapply this block; the video branch
-#   (mpvpaper) is untouched.
+#   Hyprland's own hyprpaper layer (the consuming NixOS config's desktop.nix)
+#   tracks whatever image quickshell sets. Reopens ADR-0010's "quickshell owns
+#   wallpaper" stance on request. A future refetch must reapply this block;
+#   the video branch (mpvpaper) is untouched.
