@@ -634,3 +634,9 @@ pcall(dofile, cfgHome .. "/hypr/hyprland/monitors.lua")
 -- resto da config atrás — perdias os binds todos por causa de um ficheiro de
 -- cores em falta.
 pcall(require, "hyprland.colors")
+
+-- HyprMod managed settings. Ficheiro local à máquina
+-- (~/.config/hypr/hyprland-gui.lua), não gerido por Nix nem por este repo —
+-- pcall pelo mesmo motivo do require acima: numa máquina nova, ou no Jester,
+-- o ficheiro ainda não existe até correr o hyprmod lá.
+pcall(require, "hyprland-gui")
