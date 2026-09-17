@@ -100,6 +100,19 @@ calculator), `fuzzel`, `libsecret` (AI key storage).
 knowing if you package this yourself: on Nix, `kdePackages.kirigami` is a wrapper
 derivation with no QML in it — the real modules are in `kirigami.unwrapped`.
 
+**File manager:** `dolphin` — bound to `mainMod + E` in `hypr/hyprland.lua` and
+pinned in the dock's defaults. Trap: on a session that isn't Plasma, the
+`dolphin` package alone is not enough. Its device dialogs — LUKS unlock, mount
+authorisation — are drawn by `soliduiserver`, a kded6 module that ships in
+`plasma-workspace`, not in Dolphin; without kded6 running *and* able to find
+that module, the prompt silently never opens. Icons need `breeze-icons` present
+on `XDG_DATA_DIRS` (Dolphin is a KF app on KIconLoader and asks for the
+`breeze` theme regardless of `QT_QPA_PLATFORMTHEME`). The desktop portal's
+`FileChooser` should be routed to the KDE backend. On Nix specifically, kded6's
+`QT_PLUGIN_PATH` is baked at build time and won't see plasma-workspace's plugin
+dir — the consuming config has to override it for the `plasma-kded6` user
+service.
+
 **Python** (10 packages, run through a venv-shaped shim rather than a bare
 interpreter — see the note below): `materialyoucolor` (the HCT/Material You
 palette generator), `opencv4` + `pillow` + `numpy` (wallpaper region detection,
