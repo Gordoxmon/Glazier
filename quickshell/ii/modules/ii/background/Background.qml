@@ -97,6 +97,15 @@ Variants {
             // Clock position gets updated after zoom scale is updated
         }
 
+        // minSuitableScale is computed once from screen size and cached; a monitor
+        // resolution change (e.g. swapping the external display) otherwise leaves
+        // the wallpaper sized for the old screen, floating inside the new one.
+        Connections {
+            target: bgRoot.screen
+            function onWidthChanged() { bgRoot.updateZoomScale(); }
+            function onHeightChanged() { bgRoot.updateZoomScale(); }
+        }
+
         // Wallpaper zoom scale
         function updateZoomScale() {
             getWallpaperSizeProc.path = bgRoot.wallpaperPath;
